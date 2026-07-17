@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key><string>IconBuilder</string>
+    <key>CFBundleDisplayName</key><string>Icon Builder</string>
+    <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <!-- Don't let AppKit convert bare argv paths into open-file launch events;
+         ContentView.onAppear parses them itself. Without this, SwiftUI
+         suppresses the WindowGroup window on `IconBuilder <path>` launches. -->
+    <key>NSTreatUnknownArgumentsAsOpen</key><false/>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeName</key><string>Apple Icon</string>
+        <key>CFBundleTypeRole</key><string>Editor</string>
+        <key>LSItemContentTypes</key>
+        <array><string>com.apple.icon-composer.icon</string></array>
+        <key>CFBundleTypeExtensions</key><array><string>icon</string></array>
+      </dict>
+    </array>
+</dict>
+</plist>

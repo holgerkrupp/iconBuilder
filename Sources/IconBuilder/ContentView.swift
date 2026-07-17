@@ -7,8 +7,10 @@ struct ContentView: View {
 
     var body: some View {
         HSplitView {
+            SidebarPane(model: model)
+                .frame(minWidth: 180, idealWidth: 220, maxWidth: 320)
             PreviewPane(model: model)
-                .frame(minWidth: 480)
+                .frame(minWidth: 420)
             InspectorPane(model: model)
                 .frame(width: 300)
         }
@@ -24,10 +26,20 @@ struct ContentView: View {
                 Button { model.presentExport = .png } label: { Label("Export PNG", systemImage: "photo") }
                     .disabled(model.document == nil)
             }
+            ToolbarItem {
+                Button { model.presentExport = .print } label: { Label("Print-Ready PDF", systemImage: "printer") }
+                    .disabled(model.document == nil)
+            }
         }
         .navigationTitle(model.displayName)
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in handleDrop(providers) }
         .onAppear {
+            // A file delivered as an open-file event before the window existed.
+            if model.document == nil, let pending = AppDelegate.pendingOpenURL {
+                AppDelegate.pendingOpenURL = nil
+                model.open(url: pending)
+                return
+            }
             // Auto-open an .icon passed on the command line (CLI / Finder "Open With").
             if model.document == nil,
                let path = CommandLine.arguments.dropFirst().first(where: { $0.hasSuffix(".icon") }) {

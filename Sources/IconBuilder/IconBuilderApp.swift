@@ -11,6 +11,8 @@ struct IconBuilderApp: App {
         WindowGroup {
             ContentView(model: model)
                 .frame(minWidth: 900, minHeight: 600)
+                .onAppear { AppDelegate.sharedModel = model }
+                .onOpenURL { url in model.open(url: url) }
         }
         .commands {
             CommandGroup(replacing: .newItem) {
@@ -23,6 +25,9 @@ struct IconBuilderApp: App {
                     .disabled(model.document == nil)
                 Button("Export PNG…") { model.presentExport = .png }
                     .keyboardShortcut("e", modifiers: [.command, .shift])
+                    .disabled(model.document == nil)
+                Button("Export Print-Ready PDF…") { model.presentExport = .print }
+                    .keyboardShortcut("p", modifiers: [.command, .shift])
                     .disabled(model.document == nil)
             }
         }
@@ -42,14 +47,33 @@ struct IconBuilderApp: App {
 }
 
 /// Ensures the app becomes a regular, focused GUI app even when launched via
-/// `swift run` from the command line.
+/// `swift run` from the command line, and routes open-file launch events
+/// (Finder double-click / a path passed as an argument once Launch Services
+/// knows we claim `.icon` — without this handler AppKit turns the launch into
+/// an unfulfilled open-document request and SwiftUI never creates a window).
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Set by the App on creation so open-file events can reach the model.
+    static weak var sharedModel: AppModel?
+    /// URL delivered before the model/window existed; consumed by onAppear.
+    static var pendingOpenURL: URL?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let url = urls.first else { return }
+        if let model = AppDelegate.sharedModel {
+            model.open(url: url)
+        } else {
+            AppDelegate.pendingOpenURL = url
+        }
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ app: NSApplication) -> Bool { true }
 }
 
 /// Which export sheet to present, if any.
-enum ExportKind: Identifiable { case pdf, png; var id: Int { self == .pdf ? 0 : 1 } }
+enum ExportKind: Int, Identifiable { case pdf, png, print; var id: Int { rawValue } }

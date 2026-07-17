@@ -17,38 +17,91 @@ bundles, draws the icon from its `icon.json` definition, lets you apply
   The same render code drives both the on-screen preview and every export, so
   it is WYSIWYG.
 - **Recipes (OS masking + effects)** — `iOS 26`, `iOS 27` and `watchOS`
-  presets control the mask shape (squircle / circle), corner and superellipse
-  geometry, layer shadow, glass specular and edge bezel. Every value is
-  editable in the inspector.
+  presets control the mask shape and effects. The default **Apple (measured)**
+  mask is Apple's exact icon contour, extracted from a 4096 px Icon Composer
+  export (worst deviation 0.5 px at 1024 vs the alpha edge; the parametric
+  superellipse deviated up to 5 px at the corners — visible against the
+  die-cut line). Superellipse / circle / rounded-rect remain available, with
+  corner and exponent sliders, plus layer shadow, glass specular and edge
+  bezel controls. Every value is
+  editable in the inspector. Presets are calibrated against Icon Composer 2.0
+  reference exports (mask geometry is identical between 26 and 27; they differ
+  in glass/rim lighting strength and dark-appearance background).
+- **Per-layer / per-group editing** — an Icon Composer-style sidebar tree and
+  contextual inspector: select the document, a group, or a single layer and
+  edit its properties for the currently previewed appearance (opacity, blend
+  mode, fill color, Liquid Glass on/off, specular, translucency, shadow,
+  visibility, layout x/y/scale). An **Apply Recipe** menu applies the iOS 26 /
+  iOS 27 glass defaults to whatever is selected.
 - **Export**
   - **Vector PDF** in **DeviceCMYK** — paths and gradients stay vector
     (`ShadingType 2` axial shadings, no raster images), ready for print. Turn
     off cosmetic effects for a clean separation.
+  - **Print-ready PDF** (⇧⌘P) — physical target size in mm plus configurable
+    **bleed** (default 3 mm). The page is target + 2×bleed with the PDF
+    **TrimBox** on the finished size and **BleedBox** on the page; artwork
+    bleeds to the page edge (page-size underlay, exact artwork on the trim);
+    the die-cut contour follows the recipe's mask as a **`/Separation`
+    spot color named `CutContour`** (100% magenta alternate) on its own
+    **PDF layer (OCG) named `CutContour`** — the structure Roland
+    VersaWorks-style RIPs and most sticker/die-cut services expect. The
+    bleed is **seamless**: the artwork's true continuation fills it
+    (the square canvas extends past the mask), with edge-mirroring for
+    the sliver beyond the canvas — no scaled, misaligned underlay.
+    Optionally **flatten** the artwork to a CMYK bitmap at a chosen
+    resolution (default 300 dpi) for shops that require flattened files —
+    the cut line stays vector either way.
   - **PNG** (sRGB) for on-screen use.
+- **ICC-profile CMYK** — import your print service's output profile
+  (e.g. `ISOcoated_v2_300_eci.icc` / FOGRA39) in the export sheets; all CMYK
+  exports and the CMYK preview then convert through the profile (rendering
+  intent selectable: saturation for vivid artwork, perceptual, relative
+  colorimetric) and the profile is embedded in the PDF as ICCBased color.
+  The choice persists across launches. Without a profile, a built-in
+  light-GCR formula conversion is used.
+- **Hybrid artwork (100% Icon Composer match)** — the print export can place
+  an **Icon Composer PNG export** over the trim area (Artwork → Choose PNG),
+  giving a pixel-exact match with Apple's own render including backdrop blur;
+  the vector artwork still fills the bleed, the seam falls on the cut line,
+  and in CMYK mode the PNG is flattened through the selected ICC profile.
+- **RGB output** — the print-ready export can alternatively emit **sRGB**
+  artwork (Color: RGB in the export sheet) for print services that prefer
+  RGB input and convert with their own profiles; the full screen gamut is
+  preserved and the CutContour spot layer stays intact. The plain vector
+  PDF export likewise supports RGB by disabling its CMYK toggle.
 
-> Coordinate model note: the manifest places layers on a 1024‑pt canvas with a
-> center origin, Y‑up. This is reconstructed from the format and exposed in the
-> renderer; it matches Icon Composer for the primary content. If a specific
-> document's decorative layers differ, tune the recipe in the inspector.
->
-> The **iOS 27** preset is a starting point (rounder mask, stronger glass) —
-> adjust the sliders to the shipping spec.
+> Coordinate model: the manifest places layers on a 1024‑pt canvas with a
+> center origin and **Y‑down** translations, `p' = (p − 512)·scale + t` per
+> layer then per group; groups and layers are listed **topmost-first**. This
+> was calibrated pixel-exact against Icon Composer 2.0 exports (stripe seams
+> within ~2 px, glass-shape geometry within 2 px at 1024).
 
 ## Build & run
 
 Requires macOS 14+ and a recent Swift/Xcode toolchain.
 
 ```bash
+# Xcode (recommended): open the project, ⌘R to run, ⌘U for tests
+open IconBuilder.xcodeproj
+
 # Run directly (SwiftPM)
 swift run IconBuilder /path/to/YourIcon.icon
 
 # …or build a double-clickable app bundle (associates with .icon files)
 ./make-app.sh            # debug
 ./make-app.sh --release  # optimized
-open IconBuilder.app --args /path/to/YourIcon.icon
+open -a "$PWD/IconBuilder.app" /path/to/YourIcon.icon
 ```
 
-Open it in **Xcode** with `open Package.swift`.
+The Xcode project (`IconBuilder.xcodeproj`) and the SwiftPM package coexist:
+the app target compiles `Sources/IconBuilder` via synchronized folders and
+links the `IconBuilderCore` product from the local package, and a native
+`IconBuilderCoreTests` target runs the same tests as `swift test`. CLI builds:
+
+```bash
+xcodebuild -project IconBuilder.xcodeproj -scheme IconBuilder build
+xcodebuild -project IconBuilder.xcodeproj -scheme IconBuilder test
+```
 
 ## Usage
 

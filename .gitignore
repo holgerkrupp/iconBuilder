@@ -1,6 +1,7 @@
 .build/
+.xcodebuild/
+xcuserdata/
 .DS_Store
 IconBuilder.app/
 renderout/
 out/
-*.xcodeproj

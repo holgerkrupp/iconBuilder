@@ -31,6 +31,10 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
+    <!-- Don't let AppKit convert bare argv paths into open-file launch events;
+         ContentView.onAppear parses them itself. Without this, SwiftUI
+         suppresses the WindowGroup window on `IconBuilder <path>` launches. -->
+    <key>NSTreatUnknownArgumentsAsOpen</key><false/>
     <key>CFBundleDocumentTypes</key>
     <array>
       <dict>
@@ -50,4 +54,5 @@ codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
 
 echo "Built $APP"
 echo "Run:  open $APP"
-echo "Or:   open $APP --args /path/to/YourIcon.icon"
+echo "Or:   open -a \$PWD/$APP /path/to/YourIcon.icon"
+echo "Or:   open $APP --args -open /path/to/YourIcon.icon"

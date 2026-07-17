@@ -1,0 +1,48 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:1.00000,0.17647,0.33333,1.00000",
+      "srgb:0.62334,0.09296,0.00000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "hidden" : true,
+      "layers" : [
+
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "fill" : "none",
+          "image-name" : "sticker-svgrepo-com.svg",
+          "name" : "sticker-svgrepo-com"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.6
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

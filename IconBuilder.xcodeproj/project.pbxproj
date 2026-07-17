@@ -1,0 +1,344 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		48A534FD3008CC98006FB126 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 48A534FC3008CC98006FB126 /* AppIcon.icon */; };
+		AA00000000000000000000B1 /* IconBuilderCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A1 /* IconBuilderCore */; };
+		AA00000000000000000000B2 /* IconBuilderCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A2 /* IconBuilderCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		48A534FC3008CC98006FB126 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		AA0000000000000000000011 /* IconBuilder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IconBuilder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA0000000000000000000013 /* IconBuilderCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IconBuilderCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AA0000000000000000000021 /* Sources/IconBuilder */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/IconBuilder;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000022 /* Tests/IconBuilderCoreTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests/IconBuilderCoreTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA0000000000000000000031 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA00000000000000000000B1 /* IconBuilderCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000032 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA00000000000000000000B2 /* IconBuilderCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA0000000000000000000041 = {
+			isa = PBXGroup;
+			children = (
+				48A534FC3008CC98006FB126 /* AppIcon.icon */,
+				AA0000000000000000000021 /* Sources/IconBuilder */,
+				AA0000000000000000000022 /* Tests/IconBuilderCoreTests */,
+				AA0000000000000000000012 /* Info.plist */,
+				AA0000000000000000000042 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000042 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000011 /* IconBuilder.app */,
+				AA0000000000000000000013 /* IconBuilderCoreTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA0000000000000000000051 /* IconBuilder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000061 /* Build configuration list for PBXNativeTarget "IconBuilder" */;
+			buildPhases = (
+				AA0000000000000000000071 /* Sources */,
+				AA0000000000000000000031 /* Frameworks */,
+				AA0000000000000000000072 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000021 /* Sources/IconBuilder */,
+			);
+			name = IconBuilder;
+			packageProductDependencies = (
+				AA00000000000000000000A1 /* IconBuilderCore */,
+			);
+			productName = IconBuilder;
+			productReference = AA0000000000000000000011 /* IconBuilder.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AA0000000000000000000052 /* IconBuilderCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000063 /* Build configuration list for PBXNativeTarget "IconBuilderCoreTests" */;
+			buildPhases = (
+				AA0000000000000000000073 /* Sources */,
+				AA0000000000000000000032 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000022 /* Tests/IconBuilderCoreTests */,
+			);
+			name = IconBuilderCoreTests;
+			packageProductDependencies = (
+				AA00000000000000000000A2 /* IconBuilderCore */,
+			);
+			productName = IconBuilderCoreTests;
+			productReference = AA0000000000000000000013 /* IconBuilderCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AA0000000000000000000051 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = AA0000000000000000000062 /* Build configuration list for PBXProject "IconBuilder" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA0000000000000000000041;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AA0000000000000000000091 /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AA0000000000000000000042 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA0000000000000000000051 /* IconBuilder */,
+				AA0000000000000000000052 /* IconBuilderCoreTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA0000000000000000000072 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48A534FD3008CC98006FB126 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA0000000000000000000071 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000073 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA0000000000000000000081 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		AA0000000000000000000082 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		AA0000000000000000000083 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000084 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AA0000000000000000000085 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder.coretests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000086 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder.coretests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA0000000000000000000061 /* Build configuration list for PBXNativeTarget "IconBuilder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000083 /* Debug */,
+				AA0000000000000000000084 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000062 /* Build configuration list for PBXProject "IconBuilder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000081 /* Debug */,
+				AA0000000000000000000082 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000063 /* Build configuration list for PBXNativeTarget "IconBuilderCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000085 /* Debug */,
+				AA0000000000000000000086 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AA0000000000000000000091 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA00000000000000000000A1 /* IconBuilderCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IconBuilderCore;
+		};
+		AA00000000000000000000A2 /* IconBuilderCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IconBuilderCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AA0000000000000000000001 /* Project object */;
+}

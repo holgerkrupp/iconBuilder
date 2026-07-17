@@ -4,6 +4,10 @@ import PackageDescription
 let package = Package(
     name: "IconBuilder",
     platforms: [.macOS(.v14)],
+    products: [
+        // Consumed by the Xcode app target (IconBuilder.xcodeproj).
+        .library(name: "IconBuilderCore", targets: ["IconBuilderCore"]),
+    ],
     targets: [
         // Core: parsing, rendering, CMYK PDF export. No dependencies.
         .target(

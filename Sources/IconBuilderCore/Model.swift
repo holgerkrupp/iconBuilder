@@ -25,6 +25,18 @@ public struct Specialized<T: Sendable>: Sendable {
     public func value(for appearance: Appearance) -> T? {
         byAppearance[appearance] ?? base
     }
+
+    /// Write a value for one appearance. Light edits go to the base value
+    /// (unless an explicit light specialization exists); other appearances get
+    /// their own specialization — mirroring how Icon Composer's inspector
+    /// edits the currently shown appearance.
+    public mutating func setValue(_ newValue: T, for appearance: Appearance) {
+        if appearance == .light && byAppearance[.light] == nil {
+            base = newValue
+        } else {
+            byAppearance[appearance] = newValue
+        }
+    }
 }
 
 /// One entry of a `*-specializations` array: `{ "appearance": "dark", "value": … }`.
@@ -67,7 +79,7 @@ public struct ColorSpec: Sendable, Equatable, Hashable {
         let spaceName = String(parts[0])
         let space: Space
         switch spaceName {
-        case "srgb": space = .srgb
+        case "srgb", "extended-srgb": space = .srgb
         case "display-p3": space = .displayP3
         default: space = .srgb   // tolerate unknown labels as sRGB
         }
@@ -89,6 +101,8 @@ public enum Fill: Sendable, Decodable {
     case automaticGradient(ColorSpec)
     /// An explicit flat color.
     case solid(ColorSpec)
+    /// An explicit top→bottom gradient with its own stops.
+    case linearGradient([ColorSpec])
 
     public init(from decoder: Decoder) throws {
         // Either a bare string ("automatic" / "none" / a color literal)
@@ -110,6 +124,12 @@ public enum Fill: Sendable, Decodable {
         if let key = DynamicKey(stringValue: "solid"),
            let s = try? obj.decode(String.self, forKey: key), let c = ColorSpec(string: s) {
             self = .solid(c); return
+        }
+        if let key = DynamicKey(stringValue: "linear-gradient"),
+           let strings = try? obj.decode([String].self, forKey: key) {
+            let stops = strings.compactMap { ColorSpec(string: $0) }
+            if stops.count >= 2 { self = .linearGradient(stops); return }
+            if let single = stops.first { self = .solid(single); return }
         }
         self = .automatic
     }
@@ -147,16 +167,25 @@ public struct LayerPosition: Sendable, Decodable {
 public struct Shadow: Sendable, Decodable {
     public var kind: String
     public var opacity: Double
+
+    public init(kind: String, opacity: Double) {
+        self.kind = kind; self.opacity = opacity
+    }
 }
 
 public struct Translucency: Sendable, Decodable {
     public var enabled: Bool
     public var value: Double
+
+    public init(enabled: Bool, value: Double) {
+        self.enabled = enabled; self.value = value
+    }
 }
 
 // MARK: - Layer
 
-public struct Layer: Sendable {
+public struct Layer: Sendable, Identifiable {
+    public let id = UUID()
     public var name: String
     public var imageName: String
     public var position: LayerPosition
@@ -205,7 +234,7 @@ extension Layer: Decodable {
 }
 
 extension LayerPosition {
-    static var identity: LayerPosition {
+    public static var identity: LayerPosition {
         // Decode a trivial value; avoids an extra memberwise init.
         let data = Data("{\"scale\":1,\"translation-in-points\":[0,0]}".utf8)
         return try! JSONDecoder().decode(LayerPosition.self, from: data)
@@ -214,7 +243,8 @@ extension LayerPosition {
 
 // MARK: - Group
 
-public struct Group: Sendable {
+public struct Group: Sendable, Identifiable {
+    public let id = UUID()
     public var layers: [Layer]
     public var position: LayerPosition
     public var hidden: Bool

@@ -1,0 +1,114 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:1.00000,0.17647,0.33333,1.00000",
+      "srgb:0.62334,0.09296,0.00000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "hidden" : true,
+      "layers" : [
+        {
+          "image-name" : "AppIcon-Any.png",
+          "name" : "AppIcon-Any"
+        }
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.00000,0.97680,0.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "cicle.svg",
+          "name" : "cicle",
+          "position" : {
+            "scale" : 0.3,
+            "translation-in-points" : [
+              -557.6101190518558,
+              -258.3824852065224
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:1.00000,0.14913,0.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "cicle.svg",
+          "name" : "cicle",
+          "position" : {
+            "scale" : 0.3,
+            "translation-in-points" : [
+              92.32982262963401,
+              -261.3948099259947
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.99942,0.98555,0.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "cicle.svg",
+          "name" : "cicle",
+          "position" : {
+            "scale" : 0.3,
+            "translation-in-points" : [
+              -230.26449780143233,
+              63.556155711472684
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "cicle.svg",
+          "name" : "cicle",
+          "position" : {
+            "scale" : 0.3,
+            "translation-in-points" : [
+              -230.26449780143233,
+              -576.7006349001673
+            ]
+          }
+        }
+      ],
+      "position" : {
+        "scale" : 1,
+        "translation-in-points" : [
+          230.0625,
+          258.9140625
+        ]
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
