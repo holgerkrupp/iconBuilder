@@ -25,6 +25,16 @@ public struct IconDocument: @unchecked Sendable {
         }
     }
 
+    public enum SaveError: Error, CustomStringConvertible {
+        case unsafeAssetName(String)
+
+        public var description: String {
+            switch self {
+            case .unsafeAssetName(let name): return "The asset name is not safe to write: \(name)"
+            }
+        }
+    }
+
     public static func load(bundleURL: URL) throws -> IconDocument {
         let fm = FileManager.default
         var isDir: ObjCBool = false
@@ -65,5 +75,24 @@ public struct IconDocument: @unchecked Sendable {
 
     public var displayName: String {
         url.deletingPathExtension().lastPathComponent
+    }
+
+    /// Persist the manifest and any SVG geometry changed by the editor.
+    /// Unchanged source SVGs are deliberately left byte-for-byte intact.
+    public func save(modifiedShapes: [String: EditableShape] = [:]) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        let manifestData = try encoder.encode(manifest)
+
+        let assetsURL = url.appendingPathComponent("Assets", isDirectory: true)
+        try FileManager.default.createDirectory(at: assetsURL, withIntermediateDirectories: true)
+        for (name, shape) in modifiedShapes {
+            guard URL(fileURLWithPath: name).lastPathComponent == name,
+                  name.lowercased().hasSuffix(".svg") else {
+                throw SaveError.unsafeAssetName(name)
+            }
+            try shape.svgData.write(to: assetsURL.appendingPathComponent(name), options: .atomic)
+        }
+        try manifestData.write(to: url.appendingPathComponent("icon.json"), options: .atomic)
     }
 }

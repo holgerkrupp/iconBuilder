@@ -29,10 +29,27 @@ bundles, draws the icon from its `icon.json` definition, lets you apply
   in glass/rim lighting strength and dark-appearance background).
 - **Per-layer / per-group editing** — an Icon Composer-style sidebar tree and
   contextual inspector: select the document, a group, or a single layer and
-  edit its properties for the currently previewed appearance (opacity, blend
-  mode, fill color, Liquid Glass on/off, specular, translucency, shadow,
-  visibility, layout x/y/scale). An **Apply Recipe** menu applies the iOS 26 /
-  iOS 27 glass defaults to whatever is selected.
+  edit its properties for the currently previewed appearance. This includes
+  document and layer fills (automatic, none, solid, automatic gradient, and
+  editable multi-stop linear gradients), opacity, blend modes, Liquid Glass,
+  blur material, lighting, specular, translucency, refractivity, shadow,
+  visibility, layout, names, asset references, and supported platforms. An
+  **Apply Recipe** menu applies the iOS 26 / iOS 27 glass defaults to whatever
+  is selected.
+- **SVG shape editor** — add rectangles, rounded rectangles, circles, ellipses,
+  lines, curves, triangles, diamonds, stars, and arrows as new layers. Existing
+  SVG layers can be moved and resized with canvas handles or precise
+  x/y/width/height fields. The compact edit row provides the same shape library,
+  SVG import, undo/redo, and alignment-guide workflow as SymbolBuilder. Shapes
+  snap to the canvas and other artwork's edges and centers (hold ⌘ to bypass),
+  and multi-selected vector layers can be combined with Union, Subtract,
+  Intersect, or Exclude Overlap.
+  New and modified geometry is stored as SVG in the bundle's `Assets` folder;
+  untouched source SVGs are not rewritten. Use **Save** (⌘S) to persist the
+  manifest and changed shapes.
+- **Layer organization** — Command-click layers to select several, then use
+  Boolean operations or delete them together. Drag layers in the sidebar to
+  reorder them, or drop them on another group to move them across groups.
 - **Export**
   - **Vector PDF** in **DeviceCMYK** — paths and gradients stay vector
     (`ShadingType 2` axial shadings, no raster images), ready for print. Turn
@@ -108,7 +125,10 @@ xcodebuild -project IconBuilder.xcodeproj -scheme IconBuilder test
 1. **Open** an `.icon` (toolbar button, ⌘O, drag-and-drop, or launch argument).
 2. Pick an **appearance** (bottom bar) and a **recipe** (inspector); tune mask
    and effects live.
-3. **Export PDF** (⌘E) — set point size, keep *DeviceCMYK* on for print.
+3. Select a layer to edit all of its values, or choose **Add** to create an SVG
+   shape. Toggle **Edit Shape** to move and resize it on the canvas, then save
+   with ⌘S.
+4. **Export PDF** (⌘E) — set point size, keep *DeviceCMYK* on for print.
    **Export PNG** (⇧⌘E) for raster.
 
 ## Project layout
@@ -118,12 +138,13 @@ Sources/IconBuilderCore/   Parsing, rendering, CMYK export (no dependencies)
   Model.swift              Codable icon.json model + appearance specialization
   SVGPath.swift            SVG path `d` → CGPath
   SVGShape.swift           SVG element/transform walker → single CGPath
-  IconDocument.swift       .icon bundle loader
+  EditableShape.swift      Parametric shapes + SVG path serialization
+  IconDocument.swift       .icon bundle loader and saver
   Recipe.swift             OS masking/effects presets + mask geometry
   ColorConvert.swift       sRGB / Display-P3 → CMYK, gradient synthesis
   IconRenderer.swift       Shared compositor (preview == export)
   Exporters.swift          Vector CMYK PDF, PNG, in-memory PDF, rasterize
-Sources/IconBuilder/       SwiftUI app (preview, inspector, export sheet)
+Sources/IconBuilder/       SwiftUI app (preview, inspector, shape editor, export)
 Sources/rendertool/        Headless render harness (PNG/PDF) for validation
 Tests/                     Parser / color / SVG unit tests
 ```

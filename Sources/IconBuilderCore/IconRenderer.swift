@@ -79,9 +79,6 @@ public enum IconRenderer {
 
     private static func drawGroup(_ group: Group, doc: IconDocument, ctx: CGContext,
                                   size S: CGFloat, options: RenderOptions) {
-        let k = S / authoringSize
-        let g = affine(scale: group.position.scale, tx: group.position.tx, ty: group.position.ty)
-
         // Layers are also listed topmost-first.
         for layer in group.layers.reversed() where !layer.hidden {
             let opacity = layer.opacity.value(for: options.appearance) ?? 1.0
@@ -104,10 +101,7 @@ public enum IconRenderer {
             // Icon Composer coordinate model (calibrated against Icon Composer 2.0
             // reference exports): center origin, Y-DOWN, per node p' = (p−512)·s + t.
             // SVG(0..1024) → centered → layer → group → recentered → output scale.
-            let c2p = CGAffineTransform(translationX: -512, y: -512)
-            let l = affine(scale: layer.position.scale, tx: layer.position.tx, ty: layer.position.ty)
-            let p2o = CGAffineTransform(a: k, b: 0, c: 0, d: k, tx: 512 * k, ty: 512 * k)
-            var m = c2p.concatenating(l).concatenating(g).concatenating(p2o)
+            var m = layerCanvasTransform(layer: layer, group: group, outputSize: S)
 
             guard let canvasPath = shape.path.copy(using: &m) else { continue }
 
@@ -161,12 +155,7 @@ public enum IconRenderer {
     private static func drawRasterLayer(_ image: CGImage, layer: Layer, group: Group,
                                         ctx: CGContext, size S: CGFloat,
                                         options: RenderOptions) {
-        let k = S / authoringSize
-        let g = affine(scale: group.position.scale, tx: group.position.tx, ty: group.position.ty)
-        let c2p = CGAffineTransform(translationX: -512, y: -512)
-        let l = affine(scale: layer.position.scale, tx: layer.position.tx, ty: layer.position.ty)
-        let p2o = CGAffineTransform(a: k, b: 0, c: 0, d: k, tx: 512 * k, ty: 512 * k)
-        let m = c2p.concatenating(l).concatenating(g).concatenating(p2o)
+        let m = layerCanvasTransform(layer: layer, group: group, outputSize: S)
 
         ctx.saveGState()
         ctx.setAlpha(CGFloat(layer.opacity.value(for: options.appearance) ?? 1))
@@ -563,6 +552,24 @@ public enum IconRenderer {
     // MARK: - Cosmetic effects
 
     // MARK: - Helpers
+
+    /// The exact transform used to place an SVG asset into the final rendered
+    /// icon. The shape editor uses this too, so its handles line up with the
+    /// composed layer even when both the layer and its group are transformed.
+    public static func layerCanvasTransform(layer: Layer, group: Group,
+                                            outputSize: CGFloat = authoringSize) -> CGAffineTransform {
+        let k = outputSize / authoringSize
+        let centered = CGAffineTransform(translationX: -authoringSize / 2,
+                                         y: -authoringSize / 2)
+        let layerTransform = affine(scale: layer.position.scale,
+                                    tx: layer.position.tx, ty: layer.position.ty)
+        let groupTransform = affine(scale: group.position.scale,
+                                    tx: group.position.tx, ty: group.position.ty)
+        let output = CGAffineTransform(a: k, b: 0, c: 0, d: k,
+                                       tx: authoringSize / 2 * k,
+                                       ty: authoringSize / 2 * k)
+        return centered.concatenating(layerTransform).concatenating(groupTransform).concatenating(output)
+    }
 
     private static func affine(scale: Double, tx: Double, ty: Double) -> CGAffineTransform {
         CGAffineTransform(a: CGFloat(scale), b: 0, c: 0, d: CGFloat(scale),

@@ -8,6 +8,11 @@ public struct SVGShape: @unchecked Sendable {
     public var path: CGPath
     public var viewBox: CGRect
 
+    public init(path: CGPath, viewBox: CGRect = CGRect(x: 0, y: 0, width: 1024, height: 1024)) {
+        self.path = path
+        self.viewBox = viewBox
+    }
+
     /// Parse an SVG file. Returns nil if no drawable geometry is found.
     public static func load(url: URL) -> SVGShape? {
         guard let data = try? Data(contentsOf: url) else { return nil }

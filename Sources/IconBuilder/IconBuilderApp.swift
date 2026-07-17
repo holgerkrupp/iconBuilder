@@ -15,9 +15,22 @@ struct IconBuilderApp: App {
                 .onOpenURL { url in model.open(url: url) }
         }
         .commands {
+            CommandGroup(replacing: .undoRedo) {
+                Button("Undo") { model.undo() }
+                    .keyboardShortcut("z", modifiers: .command)
+                    .disabled(!model.canUndo)
+                Button("Redo") { model.redo() }
+                    .keyboardShortcut("z", modifiers: [.command, .shift])
+                    .disabled(!model.canRedo)
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Open .icon…") { openIcon() }
                     .keyboardShortcut("o", modifiers: .command)
+            }
+            CommandGroup(replacing: .saveItem) {
+                Button("Save") { model.save() }
+                    .keyboardShortcut("s", modifiers: .command)
+                    .disabled(model.document == nil || !model.isDirty)
             }
             CommandGroup(after: .saveItem) {
                 Button("Export PDF…") { model.presentExport = .pdf }

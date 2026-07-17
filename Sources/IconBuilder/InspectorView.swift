@@ -105,6 +105,29 @@ struct DocumentInspector: View {
                 }
             }
 
+            Section("Icon Background") {
+                FillEditor(fill: Binding(
+                    get: { model.document?.manifest.fill ?? .automatic },
+                    set: { value in model.withManifest { $0.fill = value } }))
+            }
+
+            Section("Supported Platforms") {
+                TextField("Circular", text: platformListBinding(\.circles),
+                          prompt: Text("watchOS, visionOS"))
+                Toggle("Shared square artwork", isOn: Binding(
+                    get: { model.document?.manifest.supportedPlatforms?.squaresShared ?? true },
+                    set: { shared in model.withManifest { manifest in
+                        var platforms = manifest.supportedPlatforms
+                            ?? SupportedPlatforms(circles: [], squaresShared: true, squares: [])
+                        platforms.squaresShared = shared
+                        manifest.supportedPlatforms = platforms
+                    }}))
+                if model.document?.manifest.supportedPlatforms?.squaresShared == false {
+                    TextField("Square", text: platformListBinding(\.squares),
+                              prompt: Text("iOS, macOS"))
+                }
+            }
+
             if let doc = model.document {
                 Section("Document") {
                     LabeledContent("Groups", value: "\(doc.manifest.groups.count)")
@@ -123,6 +146,19 @@ struct DocumentInspector: View {
                         model.recipe = preset
                     }
                 })
+    }
+
+    private func platformListBinding(_ keyPath: WritableKeyPath<SupportedPlatforms, [String]>) -> Binding<String> {
+        Binding(
+            get: { model.document?.manifest.supportedPlatforms?[keyPath: keyPath].joined(separator: ", ") ?? "" },
+            set: { text in model.withManifest { manifest in
+                var platforms = manifest.supportedPlatforms
+                    ?? SupportedPlatforms(circles: [], squaresShared: true, squares: [])
+                platforms[keyPath: keyPath] = text.split(separator: ",")
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+                manifest.supportedPlatforms = platforms
+            }})
     }
 }
 
@@ -180,6 +216,48 @@ struct GroupInspector: View {
                         Text("Combined").tag("combined")
                     }.labelsHidden()
                 }
+
+                LabeledContent("Blur material") {
+                    Picker("", selection: Binding(
+                        get: { model.group(g)?.blurMaterial.value(for: a)?.name ?? "none" },
+                        set: { value in model.withGroup(g) {
+                            $0.blurMaterial.setValue(value == "none" ? .none : .named(value), for: a)
+                        }})) {
+                        ForEach(["none", "thin", "regular", "thick", "chrome"], id: \.self) {
+                            Text($0.capitalized).tag($0)
+                        }
+                    }.labelsHidden()
+                }
+
+                LabeledContent("Blend mode") {
+                    Picker("", selection: Binding(
+                        get: { model.group(g)?.blendMode ?? "normal" },
+                        set: { value in model.withGroup(g) { $0.blendMode = value } })) {
+                        ForEach(BlendModeNames.all, id: \.self) { Text($0.capitalized).tag($0) }
+                    }.labelsHidden()
+                }
+            }
+
+            Section("Refractivity") {
+                let r = model.group(g)?.refractivity ?? Refractivity()
+                Toggle("Enabled", isOn: Binding(
+                    get: { r.enabled },
+                    set: { enabled in model.withGroup(g) {
+                        var value = $0.refractivity ?? Refractivity()
+                        value.enabled = enabled; $0.refractivity = value
+                    }}))
+                FormSlider(label: "Depth", value: Binding(
+                    get: { r.depth },
+                    set: { depth in model.withGroup(g) {
+                        var value = $0.refractivity ?? Refractivity()
+                        value.depth = depth; $0.refractivity = value
+                    }}), range: 0...1, format: "%.2f")
+                FormSlider(label: "Strength", value: Binding(
+                    get: { r.strength },
+                    set: { strength in model.withGroup(g) {
+                        var value = $0.refractivity ?? Refractivity()
+                        value.strength = strength; $0.refractivity = value
+                    }}), range: 0...1, format: "%.2f")
             }
 
             Section("Composition") {
@@ -190,6 +268,19 @@ struct GroupInspector: View {
                     position: Binding(
                         get: { model.group(g)?.position ?? .identity },
                         set: { p in model.withGroup(g) { $0.position = p } }))
+            }
+
+
+            if a != .light {
+                Section {
+                    Button("Remove \(a.rawValue.capitalized) Overrides") {
+                        model.withGroup(g) {
+                            $0.translucency.removeValue(for: a)
+                            $0.blurMaterial.removeValue(for: a)
+                            $0.lighting.removeValue(for: a)
+                        }
+                    }
+                }
             }
         }
         .formStyle(.grouped)
@@ -206,6 +297,15 @@ struct LayerInspector: View {
     var body: some View {
         let a = model.appearance
         Form {
+            Section("Layer") {
+                TextField("Name", text: Binding(
+                    get: { model.layer(g, l)?.name ?? "" },
+                    set: { value in model.withLayer(g, l) { $0.name = value } }))
+                TextField("Asset", text: Binding(
+                    get: { model.layer(g, l)?.imageName ?? "" },
+                    set: { value in model.withLayer(g, l) { $0.imageName = value } }))
+            }
+
             Section("Color") {
                 FormSlider(label: "Opacity", value: Binding(
                     get: { model.layer(g, l)?.opacity.value(for: a) ?? 1 },
@@ -216,16 +316,15 @@ struct LayerInspector: View {
                     Picker("", selection: Binding(
                         get: { model.layer(g, l)?.blendMode.value(for: a) ?? "normal" },
                         set: { v in model.withLayer(g, l) { $0.blendMode.setValue(v, for: a) } })) {
-                        ForEach(["normal", "multiply", "screen", "overlay", "soft-light",
-                                 "hard-light", "lighten", "darken"], id: \.self) { m in
+                        ForEach(BlendModeNames.all, id: \.self) { m in
                             Text(m.capitalized).tag(m)
                         }
                     }.labelsHidden()
                 }
 
-                ColorPicker("Fill", selection: Binding(
-                    get: { fillColor },
-                    set: { c in setFill(c) }))
+                FillEditor(fill: Binding(
+                    get: { model.layer(g, l)?.fill.value(for: a) ?? .automatic },
+                    set: { value in model.withLayer(g, l) { $0.fill.setValue(value, for: a) } }))
             }
 
             Section("Liquid Glass") {
@@ -243,35 +342,205 @@ struct LayerInspector: View {
                         get: { model.layer(g, l)?.position ?? .identity },
                         set: { p in model.withLayer(g, l) { $0.position = p } }))
             }
+
+
+            if let shape = model.selectedShape {
+                Section("Shape") {
+                    ShapeValueEditor(shape: shape) { model.updateSelectedShape($0) }
+                    Toggle("Edit on canvas", isOn: $model.isShapeEditing)
+                }
+            }
+
+            if a != .light {
+                Section {
+                    Button("Remove \(a.rawValue.capitalized) Overrides") {
+                        model.withLayer(g, l) {
+                            $0.fill.removeValue(for: a)
+                            $0.opacity.removeValue(for: a)
+                            $0.glass.removeValue(for: a)
+                            $0.blendMode.removeValue(for: a)
+                        }
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
     }
+}
 
-    private var fillColor: Color {
-        guard let f = model.layer(g, l)?.fill.value(for: model.appearance) else { return .white }
-        switch f {
-        case .solid(let c), .automaticGradient(let c):
-            return Color(red: c.r, green: c.g, blue: c.b, opacity: c.a)
-        case .linearGradient(let stops) where !stops.isEmpty:
-            let c = stops[0]
-            return Color(red: c.r, green: c.g, blue: c.b, opacity: c.a)
-        default:
-            return .white
+private enum BlendModeNames {
+    static let all = ["normal", "multiply", "screen", "overlay", "soft-light",
+                      "hard-light", "lighten", "darken", "color-dodge", "color-burn",
+                      "difference", "exclusion", "hue", "saturation", "color", "luminosity"]
+}
+
+// MARK: - Fill editor
+
+struct FillEditor: View {
+    @Binding var fill: Fill
+
+    private enum Kind: String, CaseIterable {
+        case automatic = "Automatic"
+        case none = "None"
+        case automaticGradient = "Automatic Gradient"
+        case solid = "Solid"
+        case linearGradient = "Linear Gradient"
+    }
+
+    var body: some View {
+        Picker("Style", selection: kindBinding) {
+            ForEach(Kind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+        }
+        switch fill {
+        case .automatic, .none:
+            EmptyView()
+        case .automaticGradient(let color), .solid(let color):
+            ColorPicker("Color", selection: colorBinding(color), supportsOpacity: true)
+        case .linearGradient(let stops):
+            ForEach(stops.indices, id: \.self) { index in
+                HStack {
+                    ColorPicker("Stop \(index + 1)", selection: gradientStopBinding(index), supportsOpacity: true)
+                    if stops.count > 2 {
+                        Button { removeStop(index) } label: { Image(systemName: "minus.circle") }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
+            Button("Add Color Stop", systemImage: "plus") { addStop() }
         }
     }
 
-    private func setFill(_ color: Color) {
-        let ns = NSColor(color).usingColorSpace(.sRGB) ?? .white
-        let spec = ColorSpec(space: .srgb, r: ns.redComponent, g: ns.greenComponent,
-                             b: ns.blueComponent, a: ns.alphaComponent)
-        model.withLayer(g, l) { lyr in
-            // Preserve the fill kind: automatic-gradient stays a gradient.
-            let current = lyr.fill.value(for: model.appearance)
-            switch current {
-            case .solid: lyr.fill.setValue(.solid(spec), for: model.appearance)
-            default: lyr.fill.setValue(.automaticGradient(spec), for: model.appearance)
+    private var kindBinding: Binding<Kind> {
+        Binding(get: {
+            switch fill {
+            case .automatic: return .automatic
+            case .none: return .none
+            case .automaticGradient: return .automaticGradient
+            case .solid: return .solid
+            case .linearGradient: return .linearGradient
+            }
+        }, set: { kind in
+            let color = firstColor ?? IconBuilderCore.ColorSpec(space: .srgb, r: 0.4, g: 0.6, b: 1, a: 1)
+            switch kind {
+            case .automatic: fill = .automatic
+            case .none: fill = .none
+            case .automaticGradient: fill = .automaticGradient(color)
+            case .solid: fill = .solid(color)
+            case .linearGradient:
+                fill = .linearGradient([color, IconBuilderCore.ColorSpec(space: color.space, r: color.r * 0.65,
+                                                                         g: color.g * 0.65, b: color.b * 0.65, a: color.a)])
+            }
+        })
+    }
+
+    private var firstColor: IconBuilderCore.ColorSpec? {
+        switch fill {
+        case .automaticGradient(let color), .solid(let color): return color
+        case .linearGradient(let stops): return stops.first
+        default: return nil
+        }
+    }
+
+    private func colorBinding(_ current: IconBuilderCore.ColorSpec) -> Binding<Color> {
+        Binding(get: { current.swiftUIColor }, set: { color in
+            let spec = IconBuilderCore.ColorSpec(color: color, preferredSpace: current.space)
+            switch fill {
+            case .solid: fill = .solid(spec)
+            default: fill = .automaticGradient(spec)
+            }
+        })
+    }
+
+    private func gradientStopBinding(_ index: Int) -> Binding<Color> {
+        Binding(get: {
+            guard case .linearGradient(let stops) = fill, stops.indices.contains(index) else { return .white }
+            return stops[index].swiftUIColor
+        }, set: { color in
+            guard case .linearGradient(var stops) = fill, stops.indices.contains(index) else { return }
+            stops[index] = IconBuilderCore.ColorSpec(color: color, preferredSpace: stops[index].space)
+            fill = .linearGradient(stops)
+        })
+    }
+
+    private func addStop() {
+        guard case .linearGradient(var stops) = fill else { return }
+        stops.append(stops.last ?? IconBuilderCore.ColorSpec(space: .srgb, r: 1, g: 1, b: 1, a: 1))
+        fill = .linearGradient(stops)
+    }
+
+    private func removeStop(_ index: Int) {
+        guard case .linearGradient(var stops) = fill, stops.count > 2 else { return }
+        stops.remove(at: index)
+        fill = .linearGradient(stops)
+    }
+}
+
+private extension IconBuilderCore.ColorSpec {
+    var swiftUIColor: Color { Color(red: r, green: g, blue: b, opacity: a) }
+
+    init(color: Color, preferredSpace: IconBuilderCore.ColorSpec.Space) {
+        let target: NSColorSpace = preferredSpace == .displayP3 ? .displayP3 : .sRGB
+        let ns = NSColor(color).usingColorSpace(target) ?? NSColor(color).usingColorSpace(.sRGB) ?? .white
+        self.init(space: preferredSpace, r: ns.redComponent, g: ns.greenComponent,
+                  b: ns.blueComponent, a: ns.alphaComponent)
+    }
+}
+
+struct ShapeValueEditor: View {
+    let shape: EditableShape
+    let update: (EditableShape) -> Void
+
+    var body: some View {
+        Picker("Type", selection: Binding(
+            get: { shape.kind },
+            set: { kind in
+                guard kind != shape.kind else { return }
+                update(EditableShape(kind: kind, frame: shape.bounds,
+                                     cornerRadius: shape.cornerRadius,
+                                     pathData: kind == .path ? shape.path.svgPathData : nil))
+            })) {
+                if shape.kind == .path { Text("Path").tag(IconShapeKind.path) }
+                ForEach(IconShapeKind.allCases.filter { $0 != .path }) { kind in
+                    Text(kind.displayName).tag(kind)
+                }
+            }
+        LabeledContent("Position") {
+            HStack {
+                numeric("x", shape.bounds.minX) { setBounds(x: $0) }
+                numeric("y", shape.bounds.minY) { setBounds(y: $0) }
             }
         }
+        LabeledContent("Size") {
+            HStack {
+                numeric("w", shape.bounds.width) { setBounds(width: $0) }
+                numeric("h", shape.bounds.height) { setBounds(height: $0) }
+            }
+        }
+        if shape.kind == .roundedRectangle {
+            FormSlider(label: "Corner radius", value: Binding(
+                get: { shape.cornerRadius },
+                set: { value in var copy = shape; copy.cornerRadius = value; update(copy) }),
+                       range: 0...512, format: "%.0f")
+        }
+    }
+
+    private func numeric(_ label: String, _ value: CGFloat, set: @escaping (CGFloat) -> Void) -> some View {
+        HStack(spacing: 2) {
+            Text(label).foregroundStyle(.secondary)
+            TextField("", value: Binding(get: { Double(value) }, set: { set(CGFloat($0)) }),
+                      format: .number.precision(.fractionLength(1)))
+                .frame(width: 54)
+                .textFieldStyle(.roundedBorder)
+        }
+    }
+
+    private func setBounds(x: CGFloat? = nil, y: CGFloat? = nil,
+                           width: CGFloat? = nil, height: CGFloat? = nil) {
+        let b = shape.bounds
+        var copy = shape
+        copy.setBounds(CGRect(x: x ?? b.minX, y: y ?? b.minY,
+                              width: max(2, width ?? b.width), height: max(2, height ?? b.height)))
+        update(copy)
     }
 }
 

@@ -40,6 +40,114 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(shape?.viewBox.width, 1024)
     }
 
+    func testManifestRoundTripKeepsEditableValues() throws {
+        let json = """
+        {
+          "fill": { "linear-gradient": ["srgb:1,0,0,1", "display-p3:0,0,1,0.75"] },
+          "groups": [{
+            "blend-mode": "multiply",
+            "blur-material-specializations": [{"appearance":"dark","value":null}],
+            "refractivity": { "depth": 0.2, "strength": 0.7 },
+            "layers": [{
+              "name": "Shape", "image-name": "shape.svg",
+              "fill-specializations": [{"appearance":"dark","value":{"solid":"srgb:0,1,0,1"}}],
+              "opacity": 0.8
+            }]
+          }],
+          "supported-platforms": {"circles":["watchOS"],"squares":"shared"}
+        }
+        """
+        let decoded = try JSONDecoder().decode(IconManifest.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.groups[0].refractivity?.depth, 0.2)
+        XCTAssertEqual(decoded.groups[0].refractivity?.enabled, false)
+        XCTAssertEqual(decoded.groups[0].blurMaterial.value(for: .dark), BlurMaterial.none)
+        XCTAssertEqual(decoded.groups[0].layers[0].opacity.base, 0.8)
+        XCTAssertEqual(decoded.supportedPlatforms?.circles, ["watchOS"])
+
+        let data = try JSONEncoder().encode(decoded)
+        let roundTrip = try JSONDecoder().decode(IconManifest.self, from: data)
+        XCTAssertEqual(roundTrip.fill, decoded.fill)
+        XCTAssertEqual(roundTrip.groups[0].blendMode, "multiply")
+        XCTAssertEqual(roundTrip.groups[0].blurMaterial.value(for: .dark), BlurMaterial.none)
+        XCTAssertEqual(roundTrip.groups[0].layers[0].fill.value(for: .dark),
+                       decoded.groups[0].layers[0].fill.value(for: .dark))
+    }
+
+    func testShapeSVGAndDocumentSave() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IconBuilder-save-\(UUID().uuidString).icon")
+        let assets = root.appendingPathComponent("Assets")
+        try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let untouched = assets.appendingPathComponent("untouched.svg")
+        let original = Data("<svg viewBox=\"0 0 1 1\"><rect width=\"1\" height=\"1\"/></svg>".utf8)
+        try original.write(to: untouched)
+
+        let editable = EditableShape.starter(.star)
+        let layer = Layer(name: "Star", imageName: "star.svg")
+        let document = IconDocument(url: root,
+                                    manifest: IconManifest(groups: [Group(layers: [layer])]),
+                                    shapes: ["star.svg": SVGShape(path: editable.path)])
+        try document.save(modifiedShapes: ["star.svg": editable])
+
+        XCTAssertEqual(try Data(contentsOf: untouched), original)
+        let savedShape = try XCTUnwrap(SVGShape.load(url: assets.appendingPathComponent("star.svg")))
+        XCTAssertEqual(savedShape.path.boundingBoxOfPath.width,
+                       editable.path.boundingBoxOfPath.width, accuracy: 0.01)
+        let savedManifest = try JSONDecoder().decode(
+            IconManifest.self, from: Data(contentsOf: root.appendingPathComponent("icon.json")))
+        XCTAssertEqual(savedManifest.groups[0].layers[0].imageName, "star.svg")
+    }
+
+    func testShapeBooleanOperations() {
+        let left = CGPath(rect: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
+        let right = CGPath(rect: CGRect(x: 50, y: 0, width: 100, height: 100), transform: nil)
+
+        let union = ShapeBooleanOperation.union.apply(left, right)
+        XCTAssertTrue(union.contains(CGPoint(x: 25, y: 50)))
+        XCTAssertTrue(union.contains(CGPoint(x: 125, y: 50)))
+
+        let intersection = ShapeBooleanOperation.intersect.apply(left, right)
+        XCTAssertFalse(intersection.contains(CGPoint(x: 25, y: 50)))
+        XCTAssertTrue(intersection.contains(CGPoint(x: 75, y: 50)))
+
+        let subtraction = ShapeBooleanOperation.subtract.apply(left, right)
+        XCTAssertTrue(subtraction.contains(CGPoint(x: 25, y: 50)))
+        XCTAssertFalse(subtraction.contains(CGPoint(x: 75, y: 50)))
+
+        let exclusion = ShapeBooleanOperation.exclude.apply(left, right)
+        XCTAssertTrue(exclusion.contains(CGPoint(x: 25, y: 50)))
+        XCTAssertFalse(exclusion.contains(CGPoint(x: 75, y: 50)))
+        XCTAssertTrue(exclusion.contains(CGPoint(x: 125, y: 50)))
+    }
+
+    func testQuickLineAndCurveShapesProduceFilledSVGGeometry() {
+        for kind in [IconShapeKind.line, .curve] {
+            let shape = EditableShape.starter(kind)
+            XCTAssertFalse(shape.path.boundingBoxOfPath.isEmpty)
+            XCTAssertNotNil(SVGShape.parse(data: shape.svgData))
+        }
+    }
+
+    func testLayerReorderWithinAndAcrossGroups() {
+        let a = Layer(name: "A", imageName: "a.svg")
+        let b = Layer(name: "B", imageName: "b.svg")
+        let c = Layer(name: "C", imageName: "c.svg")
+        var manifest = IconManifest(groups: [Group(layers: [a, b, c]), Group()])
+
+        let within = manifest.moveLayer(id: a.id, toGroup: 0, before: 2)
+        XCTAssertEqual(within?.group, 0)
+        XCTAssertEqual(within?.index, 1)
+        XCTAssertEqual(manifest.groups[0].layers.map(\.name), ["B", "A", "C"])
+
+        let across = manifest.moveLayer(id: a.id, toGroup: 1, before: 0)
+        XCTAssertEqual(across?.group, 1)
+        XCTAssertEqual(across?.index, 0)
+        XCTAssertEqual(manifest.groups[0].layers.map(\.name), ["B", "C"])
+        XCTAssertEqual(manifest.groups[1].layers.map(\.name), ["A"])
+    }
+
     /// Regression test for the Icon Composer coordinate model, calibrated
     /// against Icon Composer 2.0 reference exports: center origin, Y-down,
     /// p' = (p − 512)·scale + translation, applied per layer then per group,
@@ -82,6 +190,26 @@ final class ParserTests: XCTestCase {
         func alpha(_ x: Int, _ y: Int) -> UInt8 { data[y * bpr + x * 4 + 3] }
         XCTAssertEqual(alpha(512, 850), 0, "above the bar top edge should be empty")
         XCTAssertGreaterThan(alpha(512, 890), 200, "below the bar top edge should be filled")
+    }
+
+    func testEditorLayerTransformMatchesFinalComposition() {
+        let layer = Layer(name: "Shape", imageName: "shape.svg",
+                          position: LayerPosition(scale: 0.7, translation: [-355, -516]))
+        let group = Group(layers: [layer],
+                          position: LayerPosition(scale: 1.0, translation: [386, 506]))
+        let transform = IconRenderer.layerCanvasTransform(layer: layer, group: group)
+
+        // The SVG center becomes the accumulated layer + group translation,
+        // then is recentered on the 1024-point output canvas.
+        let center = CGPoint(x: 512, y: 512).applying(transform)
+        XCTAssertEqual(center.x, 543, accuracy: 0.001)
+        XCTAssertEqual(center.y, 502, accuracy: 0.001)
+
+        // Editing uses the inverse transform to turn pointer positions back
+        // into raw SVG coordinates.
+        let roundTrip = center.applying(transform.inverted())
+        XCTAssertEqual(roundTrip.x, 512, accuracy: 0.001)
+        XCTAssertEqual(roundTrip.y, 512, accuracy: 0.001)
     }
 
     /// The print-ready export must produce a page of target+bleed size with a

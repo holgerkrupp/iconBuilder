@@ -9,7 +9,13 @@ struct ContentView: View {
         HSplitView {
             SidebarPane(model: model)
                 .frame(minWidth: 180, idealWidth: 220, maxWidth: 320)
-            PreviewPane(model: model)
+            Group {
+                if model.isShapeEditing, model.selectedShape != nil {
+                    ShapeEditorView(model: model)
+                } else {
+                    PreviewPane(model: model)
+                }
+            }
                 .frame(minWidth: 420)
             InspectorPane(model: model)
                 .frame(width: 300)
@@ -17,6 +23,33 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button { openIcon() } label: { Label("Open", systemImage: "folder") }
+            }
+            ToolbarItem {
+                Button { model.save() } label: {
+                    Label(model.isDirty ? "Save Changes" : "Save", systemImage: "square.and.arrow.down")
+                }
+                .disabled(model.document == nil || !model.isDirty)
+            }
+            ToolbarItem {
+                Menu {
+                    ForEach(IconShapeKind.allCases.filter { $0 != .path }) { kind in
+                        Button { model.addShape(kind) } label: {
+                            Label(kind.displayName, systemImage: kind.systemImage)
+                        }
+                    }
+                    Divider()
+                    Button("New Group", systemImage: "folder.badge.plus") { model.addGroup() }
+                } label: {
+                    Label("Add", systemImage: "plus")
+                }
+                .disabled(model.document == nil)
+            }
+            ToolbarItem {
+                Toggle(isOn: $model.isShapeEditing) {
+                    Label("Edit Shape", systemImage: "pencil.and.outline")
+                }
+                .toggleStyle(.button)
+                .disabled(model.selectedShape == nil)
             }
             ToolbarItem {
                 Button { model.presentExport = .pdf } label: { Label("Export PDF", systemImage: "doc.richtext") }
@@ -49,6 +82,13 @@ struct ContentView: View {
         .sheet(item: Binding(get: { model.presentExport }, set: { model.presentExport = $0 })) { kind in
             ExportSheet(model: model, kind: kind)
         }
+        .alert("Could Not Save", isPresented: Binding(
+            get: { model.saveErrorMessage != nil },
+            set: { if !$0 { model.saveErrorMessage = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(model.saveErrorMessage ?? "Unknown error")
+            }
     }
 
     private func openIcon() {
