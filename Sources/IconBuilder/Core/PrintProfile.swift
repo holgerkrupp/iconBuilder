@@ -4,20 +4,20 @@ import ColorSync
 
 /// A user-supplied ICC output profile (e.g. ISO Coated v2 300% / FOGRA39)
 /// used for profile-accurate CMYK conversion in exports and previews.
-public struct PrintProfile: @unchecked Sendable {
+struct PrintProfile: @unchecked Sendable {
     /// The ICC-based CMYK color space. CGColorSpace is immutable.
-    public let space: CGColorSpace
+    let space: CGColorSpace
     /// Human-readable profile description (from the ICC `desc` tag).
-    public let name: String
+    let name: String
     /// Where the profile was loaded from (for persistence).
-    public let url: URL
+    let url: URL
 
-    public enum LoadError: Error, CustomStringConvertible {
+    enum LoadError: Error, CustomStringConvertible {
         case unreadable
         case notAnICCProfile
         case notCMYK(String)
 
-        public var description: String {
+        var description: String {
             switch self {
             case .unreadable: return "The file could not be read."
             case .notAnICCProfile: return "The file is not a valid ICC profile."
@@ -26,7 +26,7 @@ public struct PrintProfile: @unchecked Sendable {
         }
     }
 
-    public static func load(url: URL) throws -> PrintProfile {
+    static func load(url: URL) throws -> PrintProfile {
         guard let data = try? Data(contentsOf: url) else { throw LoadError.unreadable }
         guard let space = CGColorSpace(iccData: data as CFData) else {
             throw LoadError.notAnICCProfile
@@ -44,7 +44,7 @@ public struct PrintProfile: @unchecked Sendable {
     /// it is designed for vivid flat graphics and keeps icon colors punchy;
     /// colorimetric intents map the wide-gamut screen colors to noticeably
     /// duller tints.
-    public var intent: CGColorRenderingIntent = .saturation
+    var intent: CGColorRenderingIntent = .saturation
 
     /// Convert any ColorSpec/RGB color into this profile's CMYK space.
     func convert(r: CGFloat, g: CGFloat, b: CGFloat, alpha: CGFloat) -> CGColor? {
@@ -57,7 +57,7 @@ public struct PrintProfile: @unchecked Sendable {
 }
 
 extension PrintProfile: Equatable {
-    public static func == (lhs: PrintProfile, rhs: PrintProfile) -> Bool {
+    static func == (lhs: PrintProfile, rhs: PrintProfile) -> Bool {
         lhs.url == rhs.url && lhs.name == rhs.name
     }
 }

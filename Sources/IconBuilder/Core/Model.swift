@@ -3,7 +3,7 @@ import Foundation
 /// The four appearance variants an Icon Composer document can specialize for.
 /// A value with *no* `appearance` key in the JSON is the base value; it applies
 /// to `.light` and acts as the fallback for any appearance without its own entry.
-public enum Appearance: String, CaseIterable, Sendable, Codable {
+enum Appearance: String, CaseIterable, Sendable, Codable {
     case light
     case dark
     case tinted
@@ -12,17 +12,17 @@ public enum Appearance: String, CaseIterable, Sendable, Codable {
 
 /// A value that may differ per appearance. Built by merging a direct field
 /// (e.g. `"glass": true`) with its `*-specializations` array counterpart.
-public struct Specialized<T: Sendable>: Sendable {
-    public var base: T?
-    public var byAppearance: [Appearance: T]
+struct Specialized<T: Sendable>: Sendable {
+    var base: T?
+    var byAppearance: [Appearance: T]
 
-    public init(base: T? = nil, byAppearance: [Appearance: T] = [:]) {
+    init(base: T? = nil, byAppearance: [Appearance: T] = [:]) {
         self.base = base
         self.byAppearance = byAppearance
     }
 
     /// Resolve the effective value for an appearance, falling back to the base.
-    public func value(for appearance: Appearance) -> T? {
+    func value(for appearance: Appearance) -> T? {
         byAppearance[appearance] ?? base
     }
 
@@ -30,7 +30,7 @@ public struct Specialized<T: Sendable>: Sendable {
     /// (unless an explicit light specialization exists); other appearances get
     /// their own specialization — mirroring how Icon Composer's inspector
     /// edits the currently shown appearance.
-    public mutating func setValue(_ newValue: T, for appearance: Appearance) {
+    mutating func setValue(_ newValue: T, for appearance: Appearance) {
         if appearance == .light && byAppearance[.light] == nil {
             base = newValue
         } else {
@@ -39,7 +39,7 @@ public struct Specialized<T: Sendable>: Sendable {
     }
 
     /// Remove an appearance override so it falls back to the base value.
-    public mutating func removeValue(for appearance: Appearance) {
+    mutating func removeValue(for appearance: Appearance) {
         if appearance == .light && byAppearance[.light] == nil {
             base = nil
         } else {
@@ -87,16 +87,16 @@ private func encodeSpecialized<T: Codable & Sendable, K: CodingKey>(
 
 /// A color parsed from strings like `"srgb:0.0,0.99,1.0,1.0"` or
 /// `"display-p3:0.27,0.60,0.84,1.0"`.
-public struct ColorSpec: Sendable, Equatable, Hashable, Codable {
-    public enum Space: String, Sendable, Hashable, Codable { case srgb, displayP3 }
-    public var space: Space
-    public var r: Double, g: Double, b: Double, a: Double
+struct ColorSpec: Sendable, Equatable, Hashable, Codable {
+    enum Space: String, Sendable, Hashable, Codable { case srgb, displayP3 }
+    var space: Space
+    var r: Double, g: Double, b: Double, a: Double
 
-    public init(space: Space, r: Double, g: Double, b: Double, a: Double) {
+    init(space: Space, r: Double, g: Double, b: Double, a: Double) {
         self.space = space; self.r = r; self.g = g; self.b = b; self.a = a
     }
 
-    public init?(string: String) {
+    init?(string: String) {
         let parts = string.split(separator: ":", maxSplits: 1)
         guard parts.count == 2 else { return nil }
         let spaceName = String(parts[0])
@@ -114,12 +114,12 @@ public struct ColorSpec: Sendable, Equatable, Hashable, Codable {
     }
 
 
-    public var stringValue: String {
+    var stringValue: String {
         let prefix = space == .displayP3 ? "display-p3" : "srgb"
         return String(format: "%@:%0.5f,%0.5f,%0.5f,%0.5f", prefix, r, g, b, a)
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let value = try decoder.singleValueContainer().decode(String.self)
         guard let parsed = ColorSpec(string: value) else {
             throw DecodingError.dataCorruptedError(in: try decoder.singleValueContainer(),
@@ -128,7 +128,7 @@ public struct ColorSpec: Sendable, Equatable, Hashable, Codable {
         self = parsed
     }
 
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var c = encoder.singleValueContainer()
         try c.encode(stringValue)
     }
@@ -137,7 +137,7 @@ public struct ColorSpec: Sendable, Equatable, Hashable, Codable {
 // MARK: - Fill
 
 /// A layer/document fill. Icon Composer overrides the SVG's own fill with this.
-public enum Fill: Sendable, Codable, Equatable {
+enum Fill: Sendable, Codable, Equatable {
     case automatic
     case none
     /// A single base color from which Icon Composer synthesizes a soft gradient.
@@ -147,7 +147,7 @@ public enum Fill: Sendable, Codable, Equatable {
     /// An explicit top→bottom gradient with its own stops.
     case linearGradient([ColorSpec])
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         // Either a bare string ("automatic" / "none" / a color literal)
         if let s = try? decoder.singleValueContainer().decode(String.self) {
             switch s {
@@ -178,7 +178,7 @@ public enum Fill: Sendable, Codable, Equatable {
     }
 
 
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         switch self {
         case .automatic:
             var c = encoder.singleValueContainer(); try c.encode("automatic")
@@ -206,10 +206,10 @@ struct DynamicKey: CodingKey {
 
 // MARK: - Geometry
 
-public struct LayerPosition: Sendable, Codable, Equatable {
-    public var scale: Double
+struct LayerPosition: Sendable, Codable, Equatable {
+    var scale: Double
     /// [x, y] offset in points, Y-up (Apple/PDF convention), origin at canvas center.
-    public var translation: [Double]
+    var translation: [Double]
 
     enum CodingKeys: String, CodingKey {
         case scale
@@ -217,56 +217,56 @@ public struct LayerPosition: Sendable, Codable, Equatable {
     }
 
 
-    public init(scale: Double = 1, translation: [Double] = [0, 0]) {
+    init(scale: Double = 1, translation: [Double] = [0, 0]) {
         self.scale = scale
         self.translation = translation
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.scale = (try? c.decode(Double.self, forKey: .scale)) ?? 1.0
         self.translation = (try? c.decode([Double].self, forKey: .translation)) ?? [0, 0]
     }
 
-    public var tx: Double { translation.count > 0 ? translation[0] : 0 }
-    public var ty: Double { translation.count > 1 ? translation[1] : 0 }
+    var tx: Double { translation.count > 0 ? translation[0] : 0 }
+    var ty: Double { translation.count > 1 ? translation[1] : 0 }
 }
 
-public struct Shadow: Sendable, Codable, Equatable {
-    public var kind: String
-    public var opacity: Double
+struct Shadow: Sendable, Codable, Equatable {
+    var kind: String
+    var opacity: Double
 
-    public init(kind: String, opacity: Double) {
+    init(kind: String, opacity: Double) {
         self.kind = kind; self.opacity = opacity
     }
 }
 
-public struct Translucency: Sendable, Codable, Equatable {
-    public var enabled: Bool
-    public var value: Double
+struct Translucency: Sendable, Codable, Equatable {
+    var enabled: Bool
+    var value: Double
 
-    public init(enabled: Bool, value: Double) {
+    init(enabled: Bool, value: Double) {
         self.enabled = enabled; self.value = value
     }
 }
 
 /// `blur-material` is unusual in Icon Composer manifests because an explicit
 /// JSON null is meaningful and can also appear inside specialization values.
-public enum BlurMaterial: Sendable, Codable, Equatable {
+enum BlurMaterial: Sendable, Codable, Equatable {
     case none
     case named(String)
 
-    public var name: String? {
+    var name: String? {
         if case .named(let name) = self { return name }
         return nil
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
         self = c.decodeNil() ? .none : .named(try c.decode(String.self))
     }
 
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var c = encoder.singleValueContainer()
         switch self {
         case .none: try c.encodeNil()
@@ -277,18 +277,18 @@ public enum BlurMaterial: Sendable, Codable, Equatable {
 
 // MARK: - Layer
 
-public struct Layer: Sendable, Identifiable {
-    public let id = UUID()
-    public var name: String
-    public var imageName: String
-    public var position: LayerPosition
-    public var hidden: Bool
-    public var fill: Specialized<Fill>
-    public var opacity: Specialized<Double>
-    public var glass: Specialized<Bool>
-    public var blendMode: Specialized<String>
+struct Layer: Sendable, Identifiable {
+    let id = UUID()
+    var name: String
+    var imageName: String
+    var position: LayerPosition
+    var hidden: Bool
+    var fill: Specialized<Fill>
+    var opacity: Specialized<Double>
+    var glass: Specialized<Bool>
+    var blendMode: Specialized<String>
 
-    public init(name: String, imageName: String, position: LayerPosition = .identity,
+    init(name: String, imageName: String, position: LayerPosition = .identity,
                 hidden: Bool = false, fill: Specialized<Fill> = .init(base: .automatic),
                 opacity: Specialized<Double> = .init(base: 1),
                 glass: Specialized<Bool> = .init(base: false),
@@ -320,7 +320,7 @@ extension Layer: Decodable {
         case blendModeSpecializations = "blend-mode-specializations"
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         name = (try? c.decode(String.self, forKey: .name)) ?? ""
         imageName = (try? c.decode(String.self, forKey: .imageName)) ?? ""
@@ -343,7 +343,7 @@ extension Layer: Decodable {
 
 
 extension Layer: Encodable {
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(name, forKey: .name)
         try c.encode(imageName, forKey: .imageName)
@@ -357,27 +357,27 @@ extension Layer: Encodable {
 }
 
 extension LayerPosition {
-    public static var identity: LayerPosition {
+    static var identity: LayerPosition {
         LayerPosition()
     }
 }
 
-// MARK: - Group
+// MARK: - IconGroup
 
-public struct Group: Sendable, Identifiable {
-    public let id = UUID()
-    public var layers: [Layer]
-    public var position: LayerPosition
-    public var hidden: Bool
-    public var shadow: Shadow?
-    public var translucency: Specialized<Translucency>
-    public var blurMaterial: Specialized<BlurMaterial>
-    public var lighting: Specialized<String>
-    public var specular: Bool?
-    public var blendMode: String?
-    public var refractivity: Refractivity?
+struct IconGroup: Sendable, Identifiable {
+    let id = UUID()
+    var layers: [Layer]
+    var position: LayerPosition
+    var hidden: Bool
+    var shadow: Shadow?
+    var translucency: Specialized<Translucency>
+    var blurMaterial: Specialized<BlurMaterial>
+    var lighting: Specialized<String>
+    var specular: Bool?
+    var blendMode: String?
+    var refractivity: Refractivity?
 
-    public init(layers: [Layer] = [], position: LayerPosition = .identity,
+    init(layers: [Layer] = [], position: LayerPosition = .identity,
                 hidden: Bool = false, shadow: Shadow? = nil,
                 translucency: Specialized<Translucency> = .init(),
                 blurMaterial: Specialized<BlurMaterial> = .init(),
@@ -397,12 +397,12 @@ public struct Group: Sendable, Identifiable {
     }
 }
 
-public struct Refractivity: Sendable, Codable, Equatable {
-    public var enabled: Bool
-    public var depth: Double
-    public var strength: Double
+struct Refractivity: Sendable, Codable, Equatable {
+    var enabled: Bool
+    var depth: Double
+    var strength: Double
 
-    public init(enabled: Bool = false, depth: Double = 0, strength: Double = 0.5) {
+    init(enabled: Bool = false, depth: Double = 0, strength: Double = 0.5) {
         self.enabled = enabled
         self.depth = depth
         self.strength = strength
@@ -410,7 +410,7 @@ public struct Refractivity: Sendable, Codable, Equatable {
 
     enum CodingKeys: String, CodingKey { case enabled, depth, strength }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         enabled = (try? c.decode(Bool.self, forKey: .enabled)) ?? false
         depth = (try? c.decode(Double.self, forKey: .depth)) ?? 0
@@ -418,7 +418,7 @@ public struct Refractivity: Sendable, Codable, Equatable {
     }
 }
 
-extension Group: Decodable {
+extension IconGroup: Decodable {
     enum CodingKeys: String, CodingKey {
         case layers
         case position
@@ -435,7 +435,7 @@ extension Group: Decodable {
         case refractivity
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         layers = (try? c.decode([Layer].self, forKey: .layers)) ?? []
         position = (try? c.decode(LayerPosition.self, forKey: .position)) ?? LayerPosition.identity
@@ -457,8 +457,8 @@ extension Group: Decodable {
 }
 
 
-extension Group: Encodable {
-    public func encode(to encoder: Encoder) throws {
+extension IconGroup: Encodable {
+    func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(layers, forKey: .layers)
         if position != .identity { try c.encode(position, forKey: .position) }
@@ -478,24 +478,24 @@ extension Group: Encodable {
 
 // MARK: - Document
 
-public struct SupportedPlatforms: Sendable, Equatable {
-    public var circles: [String]
-    public var squaresShared: Bool
-    public var squares: [String]
+struct SupportedPlatforms: Sendable, Equatable {
+    var circles: [String]
+    var squaresShared: Bool
+    var squares: [String]
 
-    public init(circles: [String] = [], squaresShared: Bool = true, squares: [String] = []) {
+    init(circles: [String] = [], squaresShared: Bool = true, squares: [String] = []) {
         self.circles = circles
         self.squaresShared = squaresShared
         self.squares = squares
     }
 }
 
-public struct IconManifest: Sendable, Codable {
-    public var fill: Fill
-    public var groups: [Group]
-    public var supportedPlatforms: SupportedPlatforms?
+struct IconManifest: Sendable, Codable {
+    var fill: Fill
+    var groups: [IconGroup]
+    var supportedPlatforms: SupportedPlatforms?
 
-    public init(fill: Fill = .automatic, groups: [Group] = [],
+    init(fill: Fill = .automatic, groups: [IconGroup] = [],
                 supportedPlatforms: SupportedPlatforms? = nil) {
         self.fill = fill
         self.groups = groups
@@ -508,10 +508,10 @@ public struct IconManifest: Sendable, Codable {
         case supportedPlatforms = "supported-platforms"
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         fill = (try? c.decode(Fill.self, forKey: .fill)) ?? .automatic
-        groups = (try? c.decode([Group].self, forKey: .groups)) ?? []
+        groups = (try? c.decode([IconGroup].self, forKey: .groups)) ?? []
         supportedPlatforms = try? c.decode(SupportedPlatforms.self, forKey: .supportedPlatforms)
     }
 }
@@ -520,7 +520,7 @@ extension IconManifest {
     /// Move a runtime layer identity before an index in any group. Manifest
     /// order is topmost-first, so the returned index is also its sidebar row.
     @discardableResult
-    public mutating func moveLayer(id: UUID, toGroup targetGroup: Int,
+    mutating func moveLayer(id: UUID, toGroup targetGroup: Int,
                                    before targetIndex: Int) -> (group: Int, index: Int)? {
         guard groups.indices.contains(targetGroup) else { return nil }
         var source: (group: Int, layer: Int)?
@@ -547,7 +547,7 @@ extension SupportedPlatforms: Decodable {
         case circles
         case squares
     }
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         circles = (try? c.decode([String].self, forKey: .circles)) ?? []
         if let s = try? c.decode(String.self, forKey: .squares), s == "shared" {
@@ -561,7 +561,7 @@ extension SupportedPlatforms: Decodable {
 
 
 extension SupportedPlatforms: Encodable {
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(circles, forKey: .circles)
         if squaresShared {

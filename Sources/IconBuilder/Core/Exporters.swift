@@ -3,13 +3,18 @@ import CoreGraphics
 import ImageIO
 import UniformTypeIdentifiers
 
-public enum Exporters {
+enum Exporters {
+
+    private static let maximumRasterDimension = 8_192
 
     /// Render the icon to a vector PDF. Fills are emitted in DeviceCMYK when
     /// `options.cmyk` is set, so the file is print-ready. Paths and gradients
     /// stay vector; disable `options.effects` for a fully clean separation.
-    public static func exportPDF(_ doc: IconDocument, to url: URL,
+    static func exportPDF(_ doc: IconDocument, to url: URL,
                                  pointSize: CGFloat, options: RenderOptions) throws {
+        guard pointSize.isFinite, pointSize >= 1, pointSize <= 16_384 else {
+            throw ExportError.invalidOptions("PDF size must be between 1 and 16,384 points.")
+        }
         var pdfOptions = options
         pdfOptions.vectorPDF = true
         var mediaBox = CGRect(x: 0, y: 0, width: pointSize, height: pointSize)
@@ -24,8 +29,9 @@ public enum Exporters {
     }
 
     /// Render to an in-memory PDF (e.g. for a SwiftUI preview via PDFKit).
-    public static func pdfData(_ doc: IconDocument, pointSize: CGFloat,
+    static func pdfData(_ doc: IconDocument, pointSize: CGFloat,
                                options: RenderOptions) -> Data? {
+        guard pointSize.isFinite, pointSize >= 1, pointSize <= 16_384 else { return nil }
         var pdfOptions = options
         pdfOptions.vectorPDF = true
         let data = NSMutableData()
@@ -40,8 +46,9 @@ public enum Exporters {
     }
 
     /// Rasterize to a Display P3 CGImage, matching Icon Composer's PNG output.
-    public static func rasterize(_ doc: IconDocument, pixelSize: Int,
+    static func rasterize(_ doc: IconDocument, pixelSize: Int,
                                  options: RenderOptions) -> CGImage? {
+        guard (1...maximumRasterDimension).contains(pixelSize) else { return nil }
         let space = CGColorSpace(name: CGColorSpace.displayP3)!
         guard let ctx = CGContext(data: nil, width: pixelSize, height: pixelSize,
                                   bitsPerComponent: 8, bytesPerRow: 0, space: space,
@@ -54,8 +61,11 @@ public enum Exporters {
     }
 
     /// Write a PNG (used by the headless validation tool).
-    public static func exportPNG(_ doc: IconDocument, to url: URL, pixelSize: Int,
+    static func exportPNG(_ doc: IconDocument, to url: URL, pixelSize: Int,
                                  options: RenderOptions) throws {
+        guard (1...maximumRasterDimension).contains(pixelSize) else {
+            throw ExportError.invalidOptions("PNG size must be between 1 and 8,192 pixels.")
+        }
         guard let image = rasterize(doc, pixelSize: pixelSize, options: options) else {
             throw ExportError.contextCreationFailed
         }
@@ -66,17 +76,19 @@ public enum Exporters {
         guard CGImageDestinationFinalize(dest) else { throw ExportError.writeFailed }
     }
 
-    public enum ExportError: Error, CustomStringConvertible {
+    enum ExportError: Error, CustomStringConvertible {
         case contextCreationFailed
         case writeFailed
         case cutContourFailed
         case artworkPNGFailed
-        public var description: String {
+        case invalidOptions(String)
+        var description: String {
             switch self {
             case .contextCreationFailed: return "Could not create the graphics context."
             case .writeFailed: return "Could not write the output file."
             case .cutContourFailed: return "Could not add the CutContour spot-color layer to the PDF."
             case .artworkPNGFailed: return "Could not read the artwork PNG."
+            case .invalidOptions(let message): return message
             }
         }
     }
@@ -84,29 +96,29 @@ public enum Exporters {
     // MARK: - Print-ready export
 
     /// Options for a print-ready PDF: physical size, bleed, die-cut line.
-    public struct PrintOptions: Sendable {
+    struct PrintOptions: Sendable {
         /// Finished (cut) icon size in millimetres.
-        public var targetSizeMM: Double
+        var targetSizeMM: Double
         /// Bleed added on every side, in millimetres.
-        public var bleedMM: Double
+        var bleedMM: Double
         /// Raster resolution used when `flatten` is on. Vector output ignores it.
-        public var dpi: Double
+        var dpi: Double
         /// Rasterize the artwork to a CMYK bitmap at `dpi` (some print shops
         /// require flattened files). The cut line stays vector either way.
-        public var flatten: Bool
+        var flatten: Bool
         /// Draw the die-cut contour (100% magenta hairline on top).
-        public var cutLine: Bool
+        var cutLine: Bool
         /// Export artwork in sRGB instead of CMYK (for print services that
         /// prefer RGB input and convert with their own profiles). The
         /// CutContour spot color keeps its CMYK alternate either way.
-        public var rgb: Bool
+        var rgb: Bool
         /// Optional Icon Composer PNG export placed over the trim area, for a
         /// pixel-exact match with Apple's own render. The vector artwork still
         /// fills the bleed; the seam falls on the cut line. Raster in the trim
         /// area at the PNG's native resolution.
-        public var artworkPNGURL: URL?
+        var artworkPNGURL: URL?
 
-        public init(targetSizeMM: Double = 50, bleedMM: Double = 3, dpi: Double = 300,
+        init(targetSizeMM: Double = 50, bleedMM: Double = 3, dpi: Double = 300,
                     flatten: Bool = false, cutLine: Bool = true, rgb: Bool = false,
                     artworkPNGURL: URL? = nil) {
             self.targetSizeMM = targetSizeMM
@@ -118,19 +130,28 @@ public enum Exporters {
             self.artworkPNGURL = artworkPNGURL
         }
 
-        public static let mmToPt = 72.0 / 25.4
+        static let mmToPt = 72.0 / 25.4
 
-        public var pageSizeMM: Double { targetSizeMM + 2 * bleedMM }
-        public var targetSizePt: CGFloat { CGFloat(targetSizeMM * Self.mmToPt) }
-        public var bleedPt: CGFloat { CGFloat(bleedMM * Self.mmToPt) }
-        public var pageSizePt: CGFloat { CGFloat(pageSizeMM * Self.mmToPt) }
+        var pageSizeMM: Double { targetSizeMM + 2 * bleedMM }
+        var targetSizePt: CGFloat { CGFloat(targetSizeMM * Self.mmToPt) }
+        var bleedPt: CGFloat { CGFloat(bleedMM * Self.mmToPt) }
+        var pageSizePt: CGFloat { CGFloat(pageSizeMM * Self.mmToPt) }
     }
 
     /// Write a print-ready PDF: page = target + bleed, artwork bleeding to
     /// the page edge, PDF TrimBox on the finished size, and a CutContour
     /// die-cut contour. Artwork color is CMYK unless `print.rgb` selects sRGB.
-    public static func exportPrintPDF(_ doc: IconDocument, to url: URL,
+    static func exportPrintPDF(_ doc: IconDocument, to url: URL,
                                       print p: PrintOptions, options: RenderOptions) throws {
+        guard p.targetSizeMM.isFinite, p.targetSizeMM > 0,
+              p.bleedMM.isFinite, p.bleedMM >= 0,
+              p.dpi.isFinite, p.dpi > 0,
+              p.pageSizeMM.isFinite, p.pageSizeMM > 0 else {
+            throw ExportError.invalidOptions(
+                "Print size and resolution must be finite positive values; bleed cannot be negative."
+            )
+        }
+
         var opts = options
         opts.cmyk = !p.rgb
         opts.clipToMask = true
@@ -163,13 +184,21 @@ public enum Exporters {
         // Optional pixel-exact Icon Composer artwork for the trim area.
         var overlay: CGImage?
         if let pngURL = p.artworkPNGURL {
+            let secured = pngURL.startAccessingSecurityScopedResource()
+            defer { if secured { pngURL.stopAccessingSecurityScopedResource() } }
             guard let image = loadImage(url: pngURL) else { throw ExportError.artworkPNGFailed }
             overlay = image
         }
 
         if p.flatten {
             // Flattened: a bitmap at the requested dpi covering the full page.
-            let px = Int((p.pageSizeMM / 25.4 * p.dpi).rounded())
+            let rawPixels = (p.pageSizeMM / 25.4 * p.dpi).rounded()
+            guard rawPixels >= 1, rawPixels <= Double(maximumRasterDimension) else {
+                throw ExportError.invalidOptions(
+                    "Flattened artwork would be \(rawPixels.formatted()) pixels wide. Reduce the physical size or resolution to stay at or below \(maximumRasterDimension) pixels."
+                )
+            }
+            let px = Int(rawPixels)
             if let image = rasterizePage(doc, pagePixels: px, bleedFraction: Double(b / P),
                                          options: opts, overlay: overlay) {
                 ctx.draw(image, in: mediaBox)

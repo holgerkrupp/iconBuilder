@@ -1,11 +1,64 @@
 {
   "fill" : {
-    "linear-gradient" : [
-      "srgb:1.00000,0.17647,0.33333,1.00000",
-      "srgb:0.62334,0.09296,0.00000,1.00000"
-    ]
+    "automatic-gradient" : "srgb:0.00306,0.17089,0.42762,1.00000"
   },
   "groups" : [
+    {
+      "layers" : [
+
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.6
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
+    {
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "automatic-gradient" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "sticker-svgrepo-com.svg",
+          "name" : "sticker-svgrepo-com",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -26.077665000000025,
+              5.684341886080802e-14
+            ]
+          }
+        },
+        {
+          "fill" : "none",
+          "image-name" : "sticker-svgrepo-com-hole-2.svg",
+          "name" : "sticker-svgrepo-com Hole 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -37.734375,
+              -6.8515625
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.6
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
     {
       "hidden" : true,
       "layers" : [
@@ -24,11 +77,77 @@
     {
       "layers" : [
         {
-          "fill" : "none",
-          "image-name" : "sticker-svgrepo-com.svg",
-          "name" : "sticker-svgrepo-com"
+          "blend-mode" : "normal",
+          "fill" : {
+            "automatic-gradient" : "srgb:0.00346,0.61780,0.86272,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "gemini-svg-2.svg",
+          "name" : "gemini-svg",
+          "opacity" : 0.6741898148148148
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "automatic-gradient" : "srgb:0.99389,0.71960,0.15301,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "gemini-svg.svg",
+          "name" : "gemini-svg",
+          "opacity" : 0.667989417989418,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0.19644369178661236,
+              0
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "automatic-gradient" : "srgb:0.38040,0.73145,0.27449,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "gemini-svg-3.svg",
+          "name" : "gemini-svg",
+          "opacity" : 0.6693535052910053,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0.19644369178661236,
+              0
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.29496,0.22731,0.24318,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "sticker-svgrepo-com-hole-1.svg",
+          "name" : "sticker-svgrepo-com Hole 1",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -26.077665000000025,
+              2.499999936844688e-06
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "automatic-gradient" : "srgb:0.22000,0.55000,1.00000,1.00000"
+          },
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "sticker-svgrepo-com-2.svg",
+          "name" : "sticker-svgrepo-com",
+          "opacity" : 1
         }
       ],
+      "lighting" : "combined",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.6

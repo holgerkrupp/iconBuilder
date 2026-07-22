@@ -7,16 +7,53 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		48341B75300BA0F700793109 /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 48341B74300BA0F700793109 /* ShapeEditingKit */; };
+		48341B77300BA0F700793109 /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 48341B76300BA0F700793109 /* ShapeEditingUI */; };
+		483DB868300E3F2F00BBC02F /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 483DB867300E3F2F00BBC02F /* ShapeEditingKit */; };
+		483DB86A300E3F2F00BBC02F /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 483DB869300E3F2F00BBC02F /* ShapeEditingUI */; };
 		48A534FD3008CC98006FB126 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 48A534FC3008CC98006FB126 /* AppIcon.icon */; };
-		AA00000000000000000000B1 /* IconBuilderCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A1 /* IconBuilderCore */; };
-		AA00000000000000000000B2 /* IconBuilderCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A2 /* IconBuilderCore */; };
+		AA00000000000000000000B3 /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A3 /* ShapeEditingUI */; };
+		AA00000000000000000000B4 /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A4 /* ShapeEditingKit */; };
+		AA000000000000000000D001 /* ColorConvert.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C001 /* ColorConvert.swift */; };
+		AA000000000000000000D002 /* EdgeLight.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C002 /* EdgeLight.swift */; };
+		AA000000000000000000D003 /* EditableShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C003 /* EditableShape.swift */; };
+		AA000000000000000000D004 /* Exporters.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C004 /* Exporters.swift */; };
+		AA000000000000000000D005 /* IconDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C005 /* IconDocument.swift */; };
+		AA000000000000000000D006 /* IconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C006 /* IconRenderer.swift */; };
+		AA000000000000000000D007 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C007 /* Model.swift */; };
+		AA000000000000000000D008 /* PDFCutContour.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C008 /* PDFCutContour.swift */; };
+		AA000000000000000000D009 /* PrintProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C009 /* PrintProfile.swift */; };
+		AA000000000000000000D010 /* Recipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C010 /* Recipe.swift */; };
+		AA000000000000000000D011 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000C011 /* main.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA00000000000000000000E2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000051;
+			remoteInfo = IconBuilder;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		48A534FC3008CC98006FB126 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		AA0000000000000000000011 /* IconBuilder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IconBuilder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA0000000000000000000013 /* IconBuilderCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IconBuilderCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000014 /* rendertool */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rendertool; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000000000000000000C001 /* ColorConvert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ColorConvert.swift; path = Sources/IconBuilder/Core/ColorConvert.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C002 /* EdgeLight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EdgeLight.swift; path = Sources/IconBuilder/Core/EdgeLight.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C003 /* EditableShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EditableShape.swift; path = Sources/IconBuilder/Core/EditableShape.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C004 /* Exporters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Exporters.swift; path = Sources/IconBuilder/Core/Exporters.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C005 /* IconDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = IconDocument.swift; path = Sources/IconBuilder/Core/IconDocument.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C006 /* IconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = IconRenderer.swift; path = Sources/IconBuilder/Core/IconRenderer.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C007 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Model.swift; path = Sources/IconBuilder/Core/Model.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C008 /* PDFCutContour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PDFCutContour.swift; path = Sources/IconBuilder/Core/PDFCutContour.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C009 /* PrintProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PrintProfile.swift; path = Sources/IconBuilder/Core/PrintProfile.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C010 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Recipe.swift; path = Sources/IconBuilder/Core/Recipe.swift; sourceTree = SOURCE_ROOT; };
+		AA000000000000000000C011 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/rendertool/main.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +74,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000000000000000000B1 /* IconBuilderCore in Frameworks */,
+				483DB868300E3F2F00BBC02F /* ShapeEditingKit in Frameworks */,
+				483DB86A300E3F2F00BBC02F /* ShapeEditingUI in Frameworks */,
+				48341B75300BA0F700793109 /* ShapeEditingKit in Frameworks */,
+				48341B77300BA0F700793109 /* ShapeEditingUI in Frameworks */,
+				AA00000000000000000000B3 /* ShapeEditingUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,7 +86,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000000000000000000B2 /* IconBuilderCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000033 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA00000000000000000000B4 /* ShapeEditingKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +107,7 @@
 				AA0000000000000000000021 /* Sources/IconBuilder */,
 				AA0000000000000000000022 /* Tests/IconBuilderCoreTests */,
 				AA0000000000000000000012 /* Info.plist */,
+				AA0000000000000000000043 /* rendertool */,
 				AA0000000000000000000042 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -68,8 +117,27 @@
 			children = (
 				AA0000000000000000000011 /* IconBuilder.app */,
 				AA0000000000000000000013 /* IconBuilderCoreTests.xctest */,
+				AA0000000000000000000014 /* rendertool */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000043 /* rendertool */ = {
+			isa = PBXGroup;
+			children = (
+				AA000000000000000000C001 /* ColorConvert.swift */,
+				AA000000000000000000C002 /* EdgeLight.swift */,
+				AA000000000000000000C003 /* EditableShape.swift */,
+				AA000000000000000000C004 /* Exporters.swift */,
+				AA000000000000000000C005 /* IconDocument.swift */,
+				AA000000000000000000C006 /* IconRenderer.swift */,
+				AA000000000000000000C007 /* Model.swift */,
+				AA000000000000000000C008 /* PDFCutContour.swift */,
+				AA000000000000000000C009 /* PrintProfile.swift */,
+				AA000000000000000000C010 /* Recipe.swift */,
+				AA000000000000000000C011 /* main.swift */,
+			);
+			name = rendertool;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -92,7 +160,11 @@
 			);
 			name = IconBuilder;
 			packageProductDependencies = (
-				AA00000000000000000000A1 /* IconBuilderCore */,
+				AA00000000000000000000A3 /* ShapeEditingUI */,
+				48341B74300BA0F700793109 /* ShapeEditingKit */,
+				48341B76300BA0F700793109 /* ShapeEditingUI */,
+				483DB867300E3F2F00BBC02F /* ShapeEditingKit */,
+				483DB869300E3F2F00BBC02F /* ShapeEditingUI */,
 			);
 			productName = IconBuilder;
 			productReference = AA0000000000000000000011 /* IconBuilder.app */;
@@ -108,17 +180,36 @@
 			buildRules = (
 			);
 			dependencies = (
+				AA00000000000000000000E1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				AA0000000000000000000022 /* Tests/IconBuilderCoreTests */,
 			);
 			name = IconBuilderCoreTests;
 			packageProductDependencies = (
-				AA00000000000000000000A2 /* IconBuilderCore */,
 			);
 			productName = IconBuilderCoreTests;
 			productReference = AA0000000000000000000013 /* IconBuilderCoreTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AA0000000000000000000053 /* rendertool */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000064 /* Build configuration list for PBXNativeTarget "rendertool" */;
+			buildPhases = (
+				AA0000000000000000000074 /* Sources */,
+				AA0000000000000000000033 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = rendertool;
+			packageProductDependencies = (
+				AA00000000000000000000A4 /* ShapeEditingKit */,
+			);
+			productName = rendertool;
+			productReference = AA0000000000000000000014 /* rendertool */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -144,7 +235,7 @@
 			mainGroup = AA0000000000000000000041;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				AA0000000000000000000091 /* XCLocalSwiftPackageReference "." */,
+				483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AA0000000000000000000042 /* Products */;
@@ -153,6 +244,7 @@
 			targets = (
 				AA0000000000000000000051 /* IconBuilder */,
 				AA0000000000000000000052 /* IconBuilderCoreTests */,
+				AA0000000000000000000053 /* rendertool */,
 			);
 		};
 /* End PBXProject section */
@@ -183,7 +275,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000074 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000000000000000000D001 /* ColorConvert.swift in Sources */,
+				AA000000000000000000D002 /* EdgeLight.swift in Sources */,
+				AA000000000000000000D003 /* EditableShape.swift in Sources */,
+				AA000000000000000000D004 /* Exporters.swift in Sources */,
+				AA000000000000000000D005 /* IconDocument.swift in Sources */,
+				AA000000000000000000D006 /* IconRenderer.swift in Sources */,
+				AA000000000000000000D007 /* Model.swift in Sources */,
+				AA000000000000000000D008 /* PDFCutContour.swift in Sources */,
+				AA000000000000000000D009 /* PrintProfile.swift in Sources */,
+				AA000000000000000000D010 /* Recipe.swift in Sources */,
+				AA000000000000000000D011 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA00000000000000000000E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000051 /* IconBuilder */;
+			targetProxy = AA00000000000000000000E2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AA0000000000000000000081 /* Debug */ = {
@@ -202,7 +320,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -220,7 +338,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 6.0;
@@ -230,18 +348,32 @@
 		AA0000000000000000000083 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46D3VYP253;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -250,18 +382,32 @@
 		AA0000000000000000000084 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_HARDENED_RUNTIME = NO;
+				DEVELOPMENT_TEAM = 46D3VYP253;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2026.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -270,25 +416,122 @@
 		AA0000000000000000000085 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder.coretests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IconBuilder.app/Contents/MacOS/IconBuilder";
 			};
 			name = Debug;
 		};
 		AA0000000000000000000086 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder.coretests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IconBuilder.app/Contents/MacOS/IconBuilder";
 			};
 			name = Release;
+		};
+		AA0000000000000000000087 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000088 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AA0000000000000000000089 /* Release-NoPaywall */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+			};
+			name = "Release-NoPaywall";
+		};
+		AA000000000000000000008A /* Release-NoPaywall */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46D3VYP253;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 2026.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "NO_PAYWALL $(inherited)";
+			};
+			name = "Release-NoPaywall";
+		};
+		AA000000000000000000008B /* Release-NoPaywall */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holgerkrupp.iconbuilder.coretests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "NO_PAYWALL $(inherited)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IconBuilder.app/Contents/MacOS/IconBuilder";
+			};
+			name = "Release-NoPaywall";
+		};
+		AA000000000000000000008C /* Release-NoPaywall */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = "Release-NoPaywall";
 		};
 /* End XCBuildConfiguration section */
 
@@ -298,6 +541,7 @@
 			buildConfigurations = (
 				AA0000000000000000000083 /* Debug */,
 				AA0000000000000000000084 /* Release */,
+				AA000000000000000000008A /* Release-NoPaywall */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -307,6 +551,7 @@
 			buildConfigurations = (
 				AA0000000000000000000081 /* Debug */,
 				AA0000000000000000000082 /* Release */,
+				AA0000000000000000000089 /* Release-NoPaywall */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -316,6 +561,17 @@
 			buildConfigurations = (
 				AA0000000000000000000085 /* Debug */,
 				AA0000000000000000000086 /* Release */,
+				AA000000000000000000008B /* Release-NoPaywall */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000064 /* Build configuration list for PBXNativeTarget "rendertool" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000087 /* Debug */,
+				AA0000000000000000000088 /* Release */,
+				AA000000000000000000008C /* Release-NoPaywall */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -323,20 +579,38 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		AA0000000000000000000091 /* XCLocalSwiftPackageReference "." */ = {
+		483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = .;
+			relativePath = ../ShapeEditingKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AA00000000000000000000A1 /* IconBuilderCore */ = {
+		48341B74300BA0F700793109 /* ShapeEditingKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = IconBuilderCore;
+			productName = ShapeEditingKit;
 		};
-		AA00000000000000000000A2 /* IconBuilderCore */ = {
+		48341B76300BA0F700793109 /* ShapeEditingUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = IconBuilderCore;
+			productName = ShapeEditingUI;
+		};
+		483DB867300E3F2F00BBC02F /* ShapeEditingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */;
+			productName = ShapeEditingKit;
+		};
+		483DB869300E3F2F00BBC02F /* ShapeEditingUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */;
+			productName = ShapeEditingUI;
+		};
+		AA00000000000000000000A3 /* ShapeEditingUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ShapeEditingUI;
+		};
+		AA00000000000000000000A4 /* ShapeEditingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ShapeEditingKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -7,8 +7,10 @@
     <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>ITSAppUsesNonExemptEncryption</key><false/>
+    <key>LSApplicationCategoryType</key><string>public.app-category.graphics-design</string>
     <key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
@@ -16,13 +18,45 @@
          ContentView.onAppear parses them itself. Without this, SwiftUI
          suppresses the WindowGroup window on `IconBuilder <path>` launches. -->
     <key>NSTreatUnknownArgumentsAsOpen</key><false/>
+    <!-- The type is Apple's (Icon Composer owns it), so it is *imported*, not
+         exported. Importing it means the association still resolves on a Mac
+         without Xcode installed. The identifier has no hyphen — an earlier
+         "com.apple.icon-composer.icon" matched nothing at all, leaving only the
+         weak filename-extension fallback. Conformance to com.apple.package is
+         what stops Finder treating the bundle as a plain folder. -->
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+      <dict>
+        <key>UTTypeIdentifier</key><string>com.apple.iconcomposer.icon</string>
+        <key>UTTypeDescription</key><string>Icon Composer Icon</string>
+        <key>UTTypeConformsTo</key>
+        <array><string>com.apple.package</string></array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key><array><string>icon</string></array>
+        </dict>
+      </dict>
+    </array>
+    <!-- In-app drag payload for reordering layers in the sidebar. Declared so
+         `UTType(exportedAs:)` resolves to a registered type; it carries only a
+         layer UUID and is never written to disk. -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+      <dict>
+        <key>UTTypeIdentifier</key><string>com.holgerkrupp.iconbuilder.layer-reference</string>
+        <key>UTTypeDescription</key><string>IconBuilder Layer Reference</string>
+        <key>UTTypeConformsTo</key>
+        <array><string>public.data</string></array>
+      </dict>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
       <dict>
-        <key>CFBundleTypeName</key><string>Apple Icon</string>
+        <key>CFBundleTypeName</key><string>Icon Composer Icon</string>
         <key>CFBundleTypeRole</key><string>Editor</string>
+        <key>LSTypeIsPackage</key><true/>
         <key>LSItemContentTypes</key>
-        <array><string>com.apple.icon-composer.icon</string></array>
+        <array><string>com.apple.iconcomposer.icon</string></array>
         <key>CFBundleTypeExtensions</key><array><string>icon</string></array>
       </dict>
     </array>

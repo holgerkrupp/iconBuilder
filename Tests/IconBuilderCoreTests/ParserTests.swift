@@ -1,6 +1,6 @@
 import XCTest
 import CoreGraphics
-@testable import IconBuilderCore
+@testable import IconBuilder
 
 final class ParserTests: XCTestCase {
     func testColorSpecParsing() {
@@ -38,6 +38,65 @@ final class ParserTests: XCTestCase {
         let shape = SVGShape.parse(data: Data(svg.utf8))
         XCTAssertNotNil(shape)
         XCTAssertEqual(shape?.viewBox.width, 1024)
+    }
+
+    func testMixedFillAndStrokeSVGRenderAsOneLayer() throws {
+        let svg = """
+        <svg viewBox="0 0 100 100">
+          <path d="M50 15 L35 45 L15 50 L35 65 L30 90 L50 75 Z" fill="#fff"/>
+          <path d="M50 15 L65 45 L85 50 L65 65 L70 90 L50 75"
+                fill="none" stroke="#fff" stroke-width="8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        """
+        let image = try renderSVG(svg, pixelSize: 100)
+
+        XCTAssertGreaterThan(alpha(image, x: 50, y: 15), 150)
+        XCTAssertGreaterThan(alpha(image, x: 82, y: 50), 150,
+                             "the stroke-only half must remain visible")
+    }
+
+    func testSVGElementOpacitySurvivesLayerMaterialOverride() throws {
+        let svg = """
+        <svg viewBox="0 0 100 100">
+          <rect width="100" height="100" style="fill-opacity:0.18"/>
+        </svg>
+        """
+        let image = try renderSVG(svg, pixelSize: 100)
+        let value = alpha(image, x: 50, y: 50)
+
+        XCTAssertGreaterThan(value, 40)
+        XCTAssertLessThan(value, 55)
+    }
+
+    func testSVGViewBoxMapsToAuthoringCanvas() throws {
+        let svg = """
+        <svg viewBox="0 0 24 24"><rect width="24" height="24"/></svg>
+        """
+        let image = try renderSVG(svg, pixelSize: 100)
+
+        XCTAssertGreaterThan(alpha(image, x: 5, y: 5), 250)
+        XCTAssertGreaterThan(alpha(image, x: 95, y: 95), 250)
+    }
+
+    private func renderSVG(_ svg: String, pixelSize: Int) throws -> CGImage {
+        let shape = try XCTUnwrap(SVGShape.parse(data: Data(svg.utf8)))
+        let white = ColorSpec(space: .srgb, r: 1, g: 1, b: 1, a: 1)
+        let layer = Layer(name: "Shape", imageName: "shape.svg",
+                          fill: Specialized(base: .solid(white)))
+        let doc = IconDocument(url: URL(fileURLWithPath: "/tmp/svg-render.icon"),
+                               manifest: IconManifest(groups: [IconGroup(layers: [layer])]),
+                               shapes: ["shape.svg": shape])
+        var options = RenderOptions(appearance: .light, recipe: .iOS26)
+        options.effects = false
+        options.background = false
+        options.clipToMask = false
+        return try XCTUnwrap(Exporters.rasterize(doc, pixelSize: pixelSize, options: options))
+    }
+
+    private func alpha(_ image: CGImage, x: Int, y: Int) -> UInt8 {
+        let data = image.dataProvider!.data! as Data
+        return data[y * image.bytesPerRow + x * 4 + 3]
     }
 
     func testManifestRoundTripKeepsEditableValues() throws {
@@ -87,7 +146,7 @@ final class ParserTests: XCTestCase {
         let editable = EditableShape.starter(.star)
         let layer = Layer(name: "Star", imageName: "star.svg")
         let document = IconDocument(url: root,
-                                    manifest: IconManifest(groups: [Group(layers: [layer])]),
+                                    manifest: IconManifest(groups: [IconGroup(layers: [layer])]),
                                     shapes: ["star.svg": SVGShape(path: editable.path)])
         try document.save(modifiedShapes: ["star.svg": editable])
 
@@ -98,6 +157,76 @@ final class ParserTests: XCTestCase {
         let savedManifest = try JSONDecoder().decode(
             IconManifest.self, from: Data(contentsOf: root.appendingPathComponent("icon.json")))
         XCTAssertEqual(savedManifest.groups[0].layers[0].imageName, "star.svg")
+    }
+
+    func testDocumentLoadReportsMissingAndUnsafeAssets() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IconBuilder-load-\(UUID().uuidString).icon")
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent("Assets"), withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let layers = [
+            Layer(name: "Missing", imageName: "missing.svg"),
+            Layer(name: "Unsafe", imageName: "../outside.svg"),
+            // A duplicate reference should produce only one warning.
+            Layer(name: "Missing again", imageName: "missing.svg"),
+        ]
+        let manifest = IconManifest(groups: [IconGroup(layers: layers)])
+        try JSONEncoder().encode(manifest).write(
+            to: root.appendingPathComponent("icon.json"), options: .atomic
+        )
+
+        let document = try IconDocument.load(bundleURL: root)
+
+        XCTAssertEqual(document.warnings.count, 2)
+        XCTAssertTrue(document.warnings.contains { $0.contains("missing from Assets") })
+        XCTAssertTrue(document.warnings.contains { $0.contains("unsafe path") })
+    }
+
+    func testRasterExportRejectsUnsafeDimensions() throws {
+        let document = IconDocument(
+            url: URL(fileURLWithPath: "/tmp/empty.icon"),
+            manifest: IconManifest(),
+            shapes: [:]
+        )
+
+        XCTAssertNil(Exporters.rasterize(document, pixelSize: 0, options: RenderOptions()))
+        XCTAssertNil(Exporters.rasterize(document, pixelSize: 8_193, options: RenderOptions()))
+
+        let output = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IconBuilder-invalid-\(UUID().uuidString).pdf")
+        defer { try? FileManager.default.removeItem(at: output) }
+        XCTAssertThrowsError(try Exporters.exportPDF(
+            document, to: output, pointSize: .infinity, options: RenderOptions()
+        )) { error in
+            guard case Exporters.ExportError.invalidOptions = error else {
+                return XCTFail("Expected invalid options, got \(error)")
+            }
+        }
+    }
+
+    func testFlattenedPrintExportRejectsExcessivePixelDimensions() throws {
+        let document = IconDocument(
+            url: URL(fileURLWithPath: "/tmp/empty.icon"),
+            manifest: IconManifest(),
+            shapes: [:]
+        )
+        let output = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IconBuilder-oversized-\(UUID().uuidString).pdf")
+        defer { try? FileManager.default.removeItem(at: output) }
+        let printOptions = Exporters.PrintOptions(
+            targetSizeMM: 1_000, bleedMM: 0, dpi: 1_200, flatten: true
+        )
+
+        XCTAssertThrowsError(try Exporters.exportPrintPDF(
+            document, to: output, print: printOptions, options: RenderOptions()
+        )) { error in
+            guard case Exporters.ExportError.invalidOptions = error else {
+                return XCTFail("Expected invalid options, got \(error)")
+            }
+        }
     }
 
     func testShapeBooleanOperations() {
@@ -130,11 +259,29 @@ final class ParserTests: XCTestCase {
         }
     }
 
+    func testTextAndTransformMetadataRoundTripThroughSVG() throws {
+        var original = EditableShape.starter(.text)
+        original.text = "Icon Builder"
+        original.fontName = "Helvetica-Bold"
+        original.transformation = ShapeTransformation(rotationDegrees: 18,
+                                                       skewXDegrees: 7,
+                                                       perspectiveHorizontal: 0.3)
+
+        let parsed = try XCTUnwrap(SVGShape.parse(data: original.svgData))
+        let restored = EditableShape(shape: parsed)
+        XCTAssertEqual(restored.kind, .text)
+        XCTAssertEqual(restored.text, "Icon Builder")
+        XCTAssertEqual(restored.fontName, "Helvetica-Bold")
+        XCTAssertEqual(restored.transformation, original.transformation)
+        XCTAssertEqual(restored.path.boundingBoxOfPath.width,
+                       original.path.boundingBoxOfPath.width, accuracy: 0.01)
+    }
+
     func testLayerReorderWithinAndAcrossGroups() {
         let a = Layer(name: "A", imageName: "a.svg")
         let b = Layer(name: "B", imageName: "b.svg")
         let c = Layer(name: "C", imageName: "c.svg")
-        var manifest = IconManifest(groups: [Group(layers: [a, b, c]), Group()])
+        var manifest = IconManifest(groups: [IconGroup(layers: [a, b, c]), IconGroup()])
 
         let within = manifest.moveLayer(id: a.id, toGroup: 0, before: 2)
         XCTAssertEqual(within?.group, 0)
@@ -146,6 +293,34 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(across?.index, 0)
         XCTAssertEqual(manifest.groups[0].layers.map(\.name), ["B", "C"])
         XCTAssertEqual(manifest.groups[1].layers.map(\.name), ["A"])
+    }
+
+    func testHiddenLayersAndGroupsAreExcludedFromRenderedExports() throws {
+        let shape = SVGShape(path: CGPath(rect: CGRect(x: 0, y: 0, width: 1024, height: 1024),
+                                          transform: nil))
+        let visibleLayer = Layer(name: "Shape", imageName: "shape.svg",
+                                 fill: Specialized(base: .solid(
+                                    ColorSpec(space: .srgb, r: 1, g: 0, b: 0, a: 1))))
+        var options = RenderOptions(appearance: .light, recipe: .iOS26)
+        options.effects = false
+        options.background = false
+        options.clipToMask = false
+
+        func centerAlpha(group: IconGroup) throws -> UInt8 {
+            let doc = IconDocument(url: URL(fileURLWithPath: "/tmp/visibility.icon"),
+                                   manifest: IconManifest(groups: [group]),
+                                   shapes: ["shape.svg": shape])
+            let image = try XCTUnwrap(Exporters.rasterize(doc, pixelSize: 32, options: options))
+            let data = try XCTUnwrap(image.dataProvider?.data) as Data
+            return data[16 * image.bytesPerRow + 16 * 4 + 3]
+        }
+
+        XCTAssertGreaterThan(try centerAlpha(group: IconGroup(layers: [visibleLayer])), 0)
+
+        var hiddenLayer = visibleLayer
+        hiddenLayer.hidden = true
+        XCTAssertEqual(try centerAlpha(group: IconGroup(layers: [hiddenLayer])), 0)
+        XCTAssertEqual(try centerAlpha(group: IconGroup(layers: [visibleLayer], hidden: true)), 0)
     }
 
     /// Regression test for the Icon Composer coordinate model, calibrated
@@ -195,7 +370,7 @@ final class ParserTests: XCTestCase {
     func testEditorLayerTransformMatchesFinalComposition() {
         let layer = Layer(name: "Shape", imageName: "shape.svg",
                           position: LayerPosition(scale: 0.7, translation: [-355, -516]))
-        let group = Group(layers: [layer],
+        let group = IconGroup(layers: [layer],
                           position: LayerPosition(scale: 1.0, translation: [386, 506]))
         let transform = IconRenderer.layerCanvasTransform(layer: layer, group: group)
 

@@ -1,58 +1,58 @@
 #!/bin/bash
-# Package the IconBuilder SwiftPM executable into a double-clickable macOS .app
-# bundle, with a .icon document association. Usage: ./make-app.sh [--release]
+# Build IconBuilder.app and drop it in the project directory, ready to run.
+#
+# The app is a plain Xcode target now (there is no Swift package), so this is a
+# thin wrapper around xcodebuild for people who'd rather not open Xcode.
+# Usage: ./make-app.sh [--release] [--no-paywall]
+#
+# --no-paywall builds with Pro unlocked (compiles in the NO_PAYWALL flag). It is
+# for local testing only — never ship a build made with it.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-CONFIG=debug
-[ "${1:-}" = "--release" ] && CONFIG=release
+CONFIG=Debug
+NO_PAYWALL=0
+for arg in "$@"; do
+    case "$arg" in
+        --release) CONFIG=Release ;;
+        --no-paywall) NO_PAYWALL=1 ;;
+        *) echo "Unknown option: $arg" >&2
+           echo "Usage: ./make-app.sh [--release] [--no-paywall]" >&2
+           exit 1 ;;
+    esac
+done
+
+# Overriding this setting on the command line replaces the target's value
+# rather than extending it, so DEBUG has to be carried over explicitly.
+CONDITIONS=""
+[ "$CONFIG" = Debug ] && CONDITIONS="DEBUG"
+if [ "$NO_PAYWALL" = 1 ]; then
+    CONDITIONS="${CONDITIONS:+$CONDITIONS }NO_PAYWALL"
+    echo "*** Paywall disabled — testing build, do not distribute. ***"
+fi
 
 echo "Building ($CONFIG)…"
-swift build -c "$CONFIG" --product IconBuilder
-BIN="$(swift build -c "$CONFIG" --product IconBuilder --show-bin-path)/IconBuilder"
+DERIVED="$(mktemp -d)"
+trap 'rm -rf "$DERIVED"' EXIT
+
+xcodebuild \
+    -project IconBuilder.xcodeproj \
+    -scheme IconBuilder \
+    -configuration "$CONFIG" \
+    -destination 'platform=macOS' \
+    -derivedDataPath "$DERIVED" \
+    SWIFT_ACTIVE_COMPILATION_CONDITIONS="$CONDITIONS" \
+    build >/dev/null
 
 APP="IconBuilder.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/IconBuilder"
+cp -R "$DERIVED/Build/Products/$CONFIG/$APP" "$APP"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleName</key><string>IconBuilder</string>
-    <key>CFBundleDisplayName</key><string>Icon Builder</string>
-    <key>CFBundleIdentifier</key><string>com.holgerkrupp.iconbuilder</string>
-    <key>CFBundleExecutable</key><string>IconBuilder</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
-    <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>NSHighResolutionCapable</key><true/>
-    <key>NSPrincipalClass</key><string>NSApplication</string>
-    <!-- Don't let AppKit convert bare argv paths into open-file launch events;
-         ContentView.onAppear parses them itself. Without this, SwiftUI
-         suppresses the WindowGroup window on `IconBuilder <path>` launches. -->
-    <key>NSTreatUnknownArgumentsAsOpen</key><false/>
-    <key>CFBundleDocumentTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleTypeName</key><string>Apple Icon</string>
-        <key>CFBundleTypeRole</key><string>Editor</string>
-        <key>LSItemContentTypes</key>
-        <array><string>com.apple.icon-composer.icon</string></array>
-        <key>CFBundleTypeExtensions</key><array><string>icon</string></array>
-      </dict>
-    </array>
-</dict>
-</plist>
-PLIST
-
-# Ad-hoc codesign so Gatekeeper lets it run locally.
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+# Deliberately no re-signing here. Xcode already signed the app with its
+# entitlements; an ad-hoc `codesign --force --deep --sign -` would strip the
+# app sandbox, so this copy would behave differently from the shipping one
+# (Application Support would land outside the container, for instance).
 
 echo "Built $APP"
 echo "Run:  open $APP"
 echo "Or:   open -a \$PWD/$APP /path/to/YourIcon.icon"
-echo "Or:   open $APP --args -open /path/to/YourIcon.icon"

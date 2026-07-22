@@ -1,0 +1,33 @@
+{
+  "identifier" : "6E3F2C10-0000-4000-9000-49434F4E4249",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "6E3F2C10-0001-4000-9000-49434F4E4249",
+      "localizations" : [
+        {
+          "description" : "Unlock saving back to Icon Composer, editable .icon export, and PDF, PNG and print-ready exports.",
+          "displayName" : "IconBuilder Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "de.holgerkrupp.IconBuilder.pro",
+      "referenceName" : "IconBuilder Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

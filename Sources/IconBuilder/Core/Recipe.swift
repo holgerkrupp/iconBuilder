@@ -4,43 +4,56 @@ import CoreGraphics
 /// An OS "recipe": the mask shape the system clips the icon to, plus the
 /// compositing effects (background, layer shadow, specular/glass) it applies.
 /// Values are data-driven so they can be tuned in the UI as the specs evolve.
-public struct Recipe: Sendable, Identifiable, Hashable {
-    public var id: String
-    public var name: String
+struct Recipe: Sendable, Identifiable, Hashable {
+    var id: String
+    var name: String
 
-    public enum MaskShape: String, Sendable, CaseIterable {
+    enum MaskShape: String, Sendable, CaseIterable {
         case appleSquircle  // measured from Icon Composer's exports (exact)
         case superellipse   // parametric approximation
         case circle         // watchOS / clock
         case roundedRect
         case square
+
+        /// How far content should sit inside this mask by default.
+        ///
+        /// Artwork is authored on a square canvas, so a circular mask cuts the
+        /// corners off anything drawn edge to edge — Icon Composer's watchOS
+        /// preview shrinks the shared square artwork to sit inside the circle.
+        /// The square-family masks follow the canvas, so they need no inset.
+        var defaultContentInset: Double {
+            switch self {
+            case .circle: return 0.11
+            case .appleSquircle, .superellipse, .roundedRect, .square: return 0
+            }
+        }
     }
 
-    public var mask: MaskShape
+    var mask: MaskShape
     /// Corner radius as a fraction of the icon size (for roundedRect / how "fat"
     /// the superellipse corner is). iOS app-icon squircle ≈ 0.2237.
-    public var cornerFraction: Double
+    var cornerFraction: Double
     /// Superellipse exponent (higher = squarer). ~5 approximates Apple's squircle.
-    public var superellipseN: Double
+    var superellipseN: Double
     /// Content is drawn inset from the mask edge by this fraction (safe area).
-    public var contentInset: Double
+    var contentInset: Double
     /// Drop-shadow opacity applied under floating layers.
-    public var layerShadowOpacity: Double
+    var layerShadowOpacity: Double
     /// Blur radius (fraction of size) for the layer shadow.
-    public var layerShadowBlur: Double
+    var layerShadowBlur: Double
     /// Whether to draw a glossy specular highlight sweep (Liquid Glass).
-    public var specularHighlight: Bool
+    var specularHighlight: Bool
     /// Strength of the specular highlight, 0…1.
-    public var specularStrength: Double
+    var specularStrength: Double
     /// A subtle inner bezel/ring around the mask edge (glass rim).
-    public var edgeBezel: Double
+    var edgeBezel: Double
     /// Fallback background when the manifest fill is `automatic`/absent.
-    public var defaultBackground: ColorSpec
+    var defaultBackground: ColorSpec
     /// Fallback background for the dark appearance (measured from Icon
     /// Composer 2.0 exports: near-neutral, darker in iOS 27 than iOS 26).
-    public var defaultDarkBackground: ColorSpec
+    var defaultDarkBackground: ColorSpec
 
-    public init(id: String, name: String, mask: MaskShape, cornerFraction: Double,
+    init(id: String, name: String, mask: MaskShape, cornerFraction: Double,
                 superellipseN: Double, contentInset: Double, layerShadowOpacity: Double,
                 layerShadowBlur: Double, specularHighlight: Bool, specularStrength: Double,
                 edgeBezel: Double, defaultBackground: ColorSpec,
@@ -54,7 +67,25 @@ public struct Recipe: Sendable, Identifiable, Hashable {
         self.defaultDarkBackground = defaultDarkBackground ?? defaultBackground
     }
 
-    // MARK: Built-in presets
+    // MARK: Axes
+
+    /// A `Recipe` carries two independent things: the *shape* the icon is
+    /// clipped to (`mask`, `cornerFraction`, `superellipseN`) and the *lighting*
+    /// applied to it (shadow, specular, edge bezel, fallback backgrounds).
+    /// A circular icon can use the 27 lighting just as a squircle can, so the
+    /// UI picks them separately.
+    ///
+    /// Returns `preset`'s lighting with this recipe's shape left untouched.
+    func applyingLighting(of preset: Recipe) -> Recipe {
+        var result = preset
+        result.mask = mask
+        result.cornerFraction = cornerFraction
+        result.superellipseN = superellipseN
+        result.contentInset = contentInset
+        return result
+    }
+
+    // MARK: Built-in lighting presets
 
     // The 26/27 presets are calibrated against Icon Composer 2.0 reference
     // exports (1024 px): mask geometry measured identical between the two
@@ -62,39 +93,44 @@ public struct Recipe: Sendable, Identifiable, Hashable {
     // glass/rim effect strength — iOS 27 has a stronger, cooler edge light
     // and a brighter glass rim.
 
-    /// iOS 26 — Liquid Glass squircle, moderate glass rim and edge light.
-    public static let iOS26 = Recipe(
-        id: "ios26", name: "iOS 26",
+    /// 26 — Liquid Glass, moderate glass rim and edge light.
+    static let iOS26 = Recipe(
+        id: "ios26", name: "26",
         mask: .appleSquircle, cornerFraction: 0.2237, superellipseN: 4.2,
         contentInset: 0.0, layerShadowOpacity: 0.28, layerShadowBlur: 0.03,
         specularHighlight: true, specularStrength: 0.18, edgeBezel: 0.010,
         defaultBackground: ColorSpec(space: .srgb, r: 0.16, g: 0.17, b: 0.20, a: 1),
         defaultDarkBackground: ColorSpec(space: .srgb, r: 0.135, g: 0.135, b: 0.133, a: 1))
 
-    /// iOS 27 (Icon Composer 2.0) — same mask geometry as iOS 26; stronger
-    /// glass rim lighting and a crisper, cooler edge highlight.
-    public static let iOS27 = Recipe(
-        id: "ios27", name: "iOS 27",
+    /// 27 (Icon Composer 2.0) — stronger glass rim lighting and a crisper,
+    /// cooler edge highlight than 26.
+    static let iOS27 = Recipe(
+        id: "ios27", name: "27",
         mask: .appleSquircle, cornerFraction: 0.2237, superellipseN: 4.2,
         contentInset: 0.0, layerShadowOpacity: 0.32, layerShadowBlur: 0.04,
         specularHighlight: true, specularStrength: 0.30, edgeBezel: 0.014,
         defaultBackground: ColorSpec(space: .srgb, r: 0.13, g: 0.14, b: 0.17, a: 1),
         defaultDarkBackground: ColorSpec(space: .srgb, r: 0.088, g: 0.090, b: 0.090, a: 1))
 
-    /// watchOS — circular mask.
-    public static let watchOS = Recipe(
-        id: "watchos", name: "watchOS (circle)",
+    /// watchOS — circular mask with its own slightly softer lighting. Not
+    /// offered in the inspector, where shape and lighting are chosen
+    /// separately (Circle mask + a lighting preset covers it). Kept because
+    /// Shortcuts exposes it as a single named recipe.
+    static let watchOS = Recipe(
+        id: "watchos", name: "watchOS",
         mask: .circle, cornerFraction: 0.5, superellipseN: 2.0,
         contentInset: 0.0, layerShadowOpacity: 0.24, layerShadowBlur: 0.03,
         specularHighlight: true, specularStrength: 0.18, edgeBezel: 0.010,
         defaultBackground: ColorSpec(space: .srgb, r: 0.10, g: 0.11, b: 0.13, a: 1))
 
-    public static let builtins: [Recipe] = [iOS26, iOS27, watchOS]
+    /// Lighting choices offered in the inspector. Shape is picked separately,
+    /// so these deliberately exclude mask-defined entries like `watchOS`.
+    static let lightingPresets: [Recipe] = [iOS26, iOS27]
 
     // MARK: Mask geometry
 
     /// The mask path for an icon drawn in `rect` (canvas coordinates).
-    public func maskPath(in rect: CGRect) -> CGPath {
+    func maskPath(in rect: CGRect) -> CGPath {
         switch mask {
         case .appleSquircle:
             return Recipe.measuredSquirclePath(in: rect)

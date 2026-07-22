@@ -6,7 +6,7 @@ import CoreGraphics
 ///
 ///  - a `/Separation /CutContour` **spot color** (tint transform → 100%
 ///    magenta alternate, the convention print RIPs key on),
-///  - stroked in its own **PDF layer** (Optional Content Group) named
+///  - stroked in its own **PDF layer** (Optional Content IconGroup) named
 ///    `CutContour`, so prepress tools show and toggle it separately.
 ///
 /// Core Graphics cannot author Separation color spaces, so this appends a

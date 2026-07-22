@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
-import IconBuilderCore
+import ShapeEditingUI
 
 struct ExportSheet: View {
     @Bindable var model: AppModel
@@ -40,7 +40,7 @@ struct ExportSheet: View {
                     .help("Off keeps the file a clean, fully-vector separation. On adds soft shadows/gloss, which may rasterize.")
             } else if kind == .png {
                 stepperRow("Size (px)", value: $pngSize, range: 16...4096, step: 128)
-                Text("PNG is rasterized in sRGB for on-screen use.")
+                Text("PNG is rasterized in Display P3 to match Icon Composer output.")
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 let page = printSizeMM + 2 * printBleedMM
@@ -70,7 +70,10 @@ struct ExportSheet: View {
                     Picker("", selection: $printRGB) {
                         Text("CMYK (prepress)").tag(false)
                         Text("RGB (sRGB)").tag(true)
-                    }.labelsHidden().fixedSize()
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                    .accessibilityLabel("Print artwork color space")
                 }
                 .help("CMYK for classic prepress workflows. RGB keeps the full gamut and lets the print service convert with their own profiles — check what your shop prefers.")
                 if !printRGB {
@@ -88,15 +91,21 @@ struct ExportSheet: View {
                     .opacity(printFlatten ? 1 : 0.5)
             }
 
-            if let status { Text(status).font(.caption).foregroundStyle(.red) }
+            if let message = validationMessage ?? status {
+                Text(message).font(.caption).foregroundStyle(.red)
+            }
 
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Export…") { runExport() }.keyboardShortcut(.defaultAction)
+                Button("Export…") { runExport() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(validationMessage != nil)
             }
         }
         .padding(20)
+        .shapeEditorGlassPanel(cornerRadius: 24)
+        .padding(12)
         .frame(width: 380)
     }
 
@@ -132,7 +141,10 @@ struct ExportSheet: View {
                     Text("Saturation (vivid)").tag(CGColorRenderingIntent.saturation)
                     Text("Perceptual").tag(CGColorRenderingIntent.perceptual)
                     Text("Relative Colorimetric").tag(CGColorRenderingIntent.relativeColorimetric)
-                }.labelsHidden().fixedSize()
+                }
+                .labelsHidden()
+                .fixedSize()
+                .accessibilityLabel("CMYK rendering intent")
             }
             .help("How out-of-gamut screen colors map to printable ink. Saturation keeps flat vivid artwork punchy; colorimetric is most exact for in-gamut colors.")
         }
@@ -154,11 +166,41 @@ struct ExportSheet: View {
             Spacer()
             TextField("", value: value, format: .number)
                 .frame(width: 70).textFieldStyle(.roundedBorder).multilineTextAlignment(.trailing)
-            Stepper("", value: value, in: range, step: step).labelsHidden()
+                .accessibilityLabel(label)
+            Stepper("", value: value, in: range, step: step)
+                .labelsHidden()
+                .accessibilityLabel("Adjust \(label)")
         }
     }
 
+    private var validationMessage: String? {
+        switch kind {
+        case .pdf:
+            guard pdfSize.isFinite, (1...16_384).contains(pdfSize) else {
+                return "PDF size must be between 1 and 16,384 points."
+            }
+        case .png:
+            guard pngSize.isFinite, (1...8_192).contains(pngSize) else {
+                return "PNG size must be between 1 and 8,192 pixels."
+            }
+        case .print:
+            guard printSizeMM.isFinite, printSizeMM > 0,
+                  printBleedMM.isFinite, printBleedMM >= 0,
+                  printDPI.isFinite, printDPI > 0 else {
+                return "Print size and resolution must be positive; bleed cannot be negative."
+            }
+            if printFlatten {
+                let pixels = ((printSizeMM + 2 * printBleedMM) / 25.4 * printDPI).rounded()
+                guard pixels.isFinite, pixels >= 1, pixels <= 8_192 else {
+                    return "Flattened artwork would be \(pixels.formatted()) pixels wide. Reduce its size or resolution to 8,192 pixels or less."
+                }
+            }
+        }
+        return nil
+    }
+
     private func runExport() {
+        guard validationMessage == nil else { return }
         let panel = NSSavePanel()
         let base = model.displayName
         switch kind {

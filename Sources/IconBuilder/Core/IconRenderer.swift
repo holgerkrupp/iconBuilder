@@ -1,25 +1,26 @@
 import Foundation
 import CoreGraphics
+import ShapeEditingKit
 
-public struct RenderOptions: Sendable {
-    public var appearance: Appearance
-    public var recipe: Recipe
+struct RenderOptions: Sendable {
+    var appearance: Appearance
+    var recipe: Recipe
     /// Draw fills in DeviceCMYK (true) or sRGB (false).
-    public var cmyk: Bool
+    var cmyk: Bool
     /// Cosmetic screen effects (soft shadows, specular gloss). Turn OFF for a
     /// clean, fully-vector print export.
-    public var effects: Bool
+    var effects: Bool
     /// Fill the recipe's background behind the layers.
-    public var background: Bool
+    var background: Bool
     /// Clip the composition to the recipe's mask shape.
-    public var clipToMask: Bool
+    var clipToMask: Bool
     /// ICC output profile for CMYK conversion (nil = built-in formula).
-    public var printProfile: PrintProfile?
+    var printProfile: PrintProfile?
     /// Use PDF-compatible constant-alpha bands for transparency gradients.
     /// Quartz PDF shadings do not preserve per-stop alpha.
-    public var vectorPDF: Bool
+    var vectorPDF: Bool
 
-    public init(appearance: Appearance = .light, recipe: Recipe = .iOS26,
+    init(appearance: Appearance = .light, recipe: Recipe = .iOS26,
                 cmyk: Bool = false, effects: Bool = true,
                 background: Bool = true, clipToMask: Bool = true,
                 printProfile: PrintProfile? = nil, vectorPDF: Bool = false) {
@@ -31,12 +32,12 @@ public struct RenderOptions: Sendable {
 
 /// Draws an `IconDocument` into a `CGContext`. Used identically for on-screen
 /// bitmap preview and for vector PDF export, so what you see is what you print.
-public enum IconRenderer {
+enum IconRenderer {
 
     /// The authoring canvas Icon Composer uses.
-    public static let authoringSize: CGFloat = 1024
+    static let authoringSize: CGFloat = 1024
 
-    public static func render(_ doc: IconDocument, into ctx: CGContext,
+    static func render(_ doc: IconDocument, into ctx: CGContext,
                               size S: CGFloat, options: RenderOptions) {
         ctx.saveGState()
         // Work in a top-left origin, Y-down space (matches SVG + our math).
@@ -77,7 +78,7 @@ public enum IconRenderer {
 
     // MARK: - Layers
 
-    private static func drawGroup(_ group: Group, doc: IconDocument, ctx: CGContext,
+    private static func drawGroup(_ group: IconGroup, doc: IconDocument, ctx: CGContext,
                                   size S: CGFloat, options: RenderOptions) {
         // Layers are also listed topmost-first.
         for layer in group.layers.reversed() where !layer.hidden {
@@ -95,15 +96,30 @@ public enum IconRenderer {
             }
             let shape = doc.shapes[layer.imageName]!
 
+            // A manifest fill of `none` does not hide the layer: it means "don't
+            // override the asset", so the SVG's own colors are painted instead.
             let fill = layer.fill.value(for: options.appearance) ?? .automatic
-            if case .none = fill { continue }
 
-            // Icon Composer coordinate model (calibrated against Icon Composer 2.0
-            // reference exports): center origin, Y-DOWN, per node p' = (p−512)·s + t.
-            // SVG(0..1024) → centered → layer → group → recentered → output scale.
-            var m = layerCanvasTransform(layer: layer, group: group, outputSize: S)
-
-            guard let canvasPath = shape.path.copy(using: &m) else { continue }
+            // Normalize the SVG viewBox to Icon Composer's 1024-point authoring
+            // canvas, then apply layer/group placement and output scaling.
+            guard let canvasPath = transformedCanvasPath(shape.path, viewBox: shape.viewBox,
+                                                         layer: layer, group: group,
+                                                         outputSize: S,
+                                                         contentInset: options.recipe.contentInset) else {
+                continue
+            }
+            let canvasComponents: [(path: CGPath, opacity: CGFloat, rule: CGPathFillRule)] =
+                shape.components.compactMap { component in
+                    guard let path = transformedCanvasPath(component.path, viewBox: shape.viewBox,
+                                                           layer: layer, group: group,
+                                                           outputSize: S,
+                                                           contentInset: options.recipe.contentInset) else {
+                        return nil
+                    }
+                    return (path, component.opacity,
+                            component.usesEvenOddFillRule ? .evenOdd : .winding)
+                }
+            guard !canvasComponents.isEmpty else { continue }
 
             if ProcessInfo.processInfo.environment["ICONDEBUG"] != nil {
                 let b = canvasPath.boundingBoxOfPath
@@ -130,15 +146,23 @@ public enum IconRenderer {
                                  raised: raised, options: options)
             }
 
-            ctx.saveGState()
-            // Glass folds the layer opacity into its own alpha ramp (setAlpha
-            // cannot compose with the banded translucency fill).
-            ctx.setAlpha(translucent ? 1 : CGFloat(opacity))
-            ctx.setBlendMode(blendMode(layer.blendMode.value(for: options.appearance)))
-            paint(fill: fill, path: canvasPath, ctx: ctx, options: options,
-                  glass: translucent, layerAlpha: CGFloat(opacity),
-                  glassTranslucency: translucencyAmount, raised: raised)
-            ctx.restoreGState()
+            // Paint each source SVG component in document order. This preserves
+            // fill/stroke opacity while the manifest's layer fill supplies the
+            // actual material color.
+            let materialBox = canvasPath.boundingBoxOfPath
+            for component in canvasComponents where component.opacity > 0.0001 {
+                let componentAlpha = CGFloat(opacity) * component.opacity
+                ctx.saveGState()
+                // Glass folds alpha into its own ramp (setAlpha cannot compose
+                // with the translucency gradient).
+                ctx.setAlpha(translucent ? 1 : componentAlpha)
+                ctx.setBlendMode(blendMode(layer.blendMode.value(for: options.appearance)))
+                paint(fill: fill, path: component.path, ctx: ctx, options: options,
+                      glass: translucent, layerAlpha: componentAlpha,
+                      glassTranslucency: translucencyAmount, raised: raised,
+                      fillRule: component.rule, gradientBox: materialBox)
+                ctx.restoreGState()
+            }
 
             // Liquid-glass edge lighting (cosmetic). The group's `specular`
             // flag gates it, matching Icon Composer's Liquid Glass inspector.
@@ -152,10 +176,11 @@ public enum IconRenderer {
 
     /// Draw a raster asset layer using the standard coordinate model. The
     /// authoring canvas is 1024 pt; the image maps onto it like an SVG viewBox.
-    private static func drawRasterLayer(_ image: CGImage, layer: Layer, group: Group,
+    private static func drawRasterLayer(_ image: CGImage, layer: Layer, group: IconGroup,
                                         ctx: CGContext, size S: CGFloat,
                                         options: RenderOptions) {
-        let m = layerCanvasTransform(layer: layer, group: group, outputSize: S)
+        let m = layerCanvasTransform(layer: layer, group: group, outputSize: S,
+                                     contentInset: options.recipe.contentInset)
 
         ctx.saveGState()
         ctx.setAlpha(CGFloat(layer.opacity.value(for: options.appearance) ?? 1))
@@ -181,44 +206,64 @@ public enum IconRenderer {
                               options: RenderOptions, glass: Bool = false,
                               layerAlpha: CGFloat = 1,
                               glassTranslucency: CGFloat = 0.5,
-                              raised: Bool = false) {
-        let box = path.boundingBoxOfPath
+                              raised: Bool = false,
+                              fillRule: CGPathFillRule = .evenOdd,
+                              gradientBox: CGRect? = nil) {
+        let box = gradientBox ?? path.boundingBoxOfPath
         switch fill {
         case .none:
-            return
+            // No manifest override. ShapeEditingKit flattens away source paint
+            // colors (it keeps only coverage, alpha, and fill rule), so fall back
+            // to SVG's initial fill of black.
+            ctx.addPath(path)
+            ctx.setFillColor(ColorConvert.effectColor(
+                r: 0, g: 0, b: 0, alpha: 1,
+                cmyk: options.cmyk, profile: options.printProfile))
+            ctx.fillPath(using: fillRule)
         case .automatic:
             // Ambiguous "inherit" — render as near-white so the shape is visible.
             ctx.addPath(path)
             ctx.setFillColor(ColorConvert.effectColor(
                 r: 0.92, g: 0.92, b: 0.92, alpha: 1,
                 cmyk: options.cmyk, profile: options.printProfile))
-            ctx.fillPath(using: .evenOdd)
+            ctx.fillPath(using: fillRule)
         case .solid(let color):
             gradientFill(base: color, topLift: 0, bottomLift: 0,
                          path: path, box: box, ctx: ctx, options: options,
                          glass: glass, flat: !glass, layerAlpha: layerAlpha,
-                         glassTranslucency: glassTranslucency, raised: raised)
+                         glassTranslucency: glassTranslucency, raised: raised,
+                         fillRule: fillRule)
         case .automaticGradient(let base):
-            gradientFill(base: base, topLift: 0.06, bottomLift: 0,
-                         path: path, box: box, ctx: ctx, options: options,
-                         glass: glass, flat: false, layerAlpha: layerAlpha,
-                         glassTranslucency: glassTranslucency, raised: raised)
+            if glass || raised {
+                gradientFill(base: base, topLift: 0.08, bottomLift: -0.12,
+                             path: path, box: box, ctx: ctx, options: options,
+                             glass: glass, flat: false, layerAlpha: layerAlpha,
+                             glassTranslucency: glassTranslucency, raised: raised,
+                             fillRule: fillRule)
+            } else {
+                let stops = ColorConvert.autoGradientStops(for: base)
+                explicitGradientFill(stops: [stops.top, stops.bottom], path: path, box: box,
+                                     ctx: ctx, options: options, fillRule: fillRule)
+            }
         case .linearGradient(let stops):
             if glass, let first = stops.first {
                 // Glass with an explicit gradient: use its first stop as the base.
                 gradientFill(base: first, topLift: 0.06, bottomLift: 0,
                              path: path, box: box, ctx: ctx, options: options,
                              glass: true, flat: false, layerAlpha: layerAlpha,
-                             glassTranslucency: glassTranslucency, raised: raised)
+                             glassTranslucency: glassTranslucency, raised: raised,
+                             fillRule: fillRule)
             } else {
-                explicitGradientFill(stops: stops, path: path, box: box, ctx: ctx, options: options)
+                explicitGradientFill(stops: stops, path: path, box: box, ctx: ctx,
+                                     options: options, fillRule: fillRule)
             }
         }
     }
 
     /// Fill with an explicit multi-stop top→bottom gradient.
     private static func explicitGradientFill(stops: [ColorSpec], path: CGPath, box: CGRect,
-                                             ctx: CGContext, options: RenderOptions) {
+                                             ctx: CGContext, options: RenderOptions,
+                                             fillRule: CGPathFillRule) {
         guard !stops.isEmpty else { return }
         let space = ColorConvert.workingSpace(cmyk: options.cmyk, profile: options.printProfile)
         let colors = stops.map { ColorConvert.cgColor($0, cmyk: options.cmyk, profile: options.printProfile) }
@@ -227,12 +272,12 @@ public enum IconRenderer {
                                     locations: locations) else {
             ctx.addPath(path)
             ctx.setFillColor(colors[0])
-            ctx.fillPath(using: .evenOdd)
+            ctx.fillPath(using: fillRule)
             return
         }
         ctx.saveGState()
         ctx.addPath(path)
-        ctx.clip(using: .evenOdd)
+        ctx.clip(using: fillRule)
         ctx.drawLinearGradient(grad,
                                start: CGPoint(x: box.midX, y: box.minY),
                                end: CGPoint(x: box.midX, y: box.maxY),
@@ -246,11 +291,12 @@ public enum IconRenderer {
                                      options: RenderOptions, glass: Bool, flat: Bool,
                                      layerAlpha: CGFloat = 1,
                                      glassTranslucency: CGFloat = 0.5,
-                                     raised: Bool = false) {
+                                     raised: Bool = false,
+                                     fillRule: CGPathFillRule = .evenOdd) {
         if flat {
             ctx.addPath(path)
             ctx.setFillColor(ColorConvert.cgColor(base, cmyk: options.cmyk, profile: options.printProfile))
-            ctx.fillPath(using: .evenOdd)
+            ctx.fillPath(using: fillRule)
             return
         }
         if glass {
@@ -282,7 +328,7 @@ public enum IconRenderer {
 
             ctx.saveGState()
             ctx.addPath(path)
-            ctx.clip(using: .evenOdd)
+            ctx.clip(using: fillRule)
             let space = ColorConvert.workingSpace(cmyk: options.cmyk, profile: options.printProfile)
             let colors = [upper, upper, upperMiddle, middle, lower]
             let locations = [0.0, 0.18, 0.38, 0.55, 1.0]
@@ -317,7 +363,7 @@ public enum IconRenderer {
                                          locations: [0, 0.50, 1]) {
                 ctx.saveGState()
                 ctx.addPath(path)
-                ctx.clip(using: .evenOdd)
+                ctx.clip(using: fillRule)
                 ctx.drawLinearGradient(gradient,
                                        start: CGPoint(x: box.midX, y: box.minY),
                                        end: CGPoint(x: box.midX, y: box.maxY),
@@ -336,12 +382,12 @@ public enum IconRenderer {
                                     locations: [0, 1]) else {
             ctx.addPath(path)
             ctx.setFillColor(ColorConvert.cgColor(base, cmyk: options.cmyk, profile: options.printProfile))
-            ctx.fillPath(using: .evenOdd)
+            ctx.fillPath(using: fillRule)
             return
         }
         ctx.saveGState()
         ctx.addPath(path)
-        ctx.clip(using: .evenOdd)
+        ctx.clip(using: fillRule)
         ctx.drawLinearGradient(grad,
                                start: CGPoint(x: box.midX, y: box.minY),
                                end: CGPoint(x: box.midX, y: box.maxY),
@@ -556,8 +602,13 @@ public enum IconRenderer {
     /// The exact transform used to place an SVG asset into the final rendered
     /// icon. The shape editor uses this too, so its handles line up with the
     /// composed layer even when both the layer and its group are transformed.
-    public static func layerCanvasTransform(layer: Layer, group: Group,
-                                            outputSize: CGFloat = authoringSize) -> CGAffineTransform {
+    /// `contentInset` shrinks the composed artwork toward the canvas centre so
+    /// it clears the mask edge (see `MaskShape.defaultContentInset`). It is a
+    /// presentation-time fit, not an authoring change, so the shape editor
+    /// deliberately leaves it at 0 and keeps editing the full 1024 canvas.
+    static func layerCanvasTransform(layer: Layer, group: IconGroup,
+                                            outputSize: CGFloat = authoringSize,
+                                            contentInset: Double = 0) -> CGAffineTransform {
         let k = outputSize / authoringSize
         let centered = CGAffineTransform(translationX: -authoringSize / 2,
                                          y: -authoringSize / 2)
@@ -565,10 +616,38 @@ public enum IconRenderer {
                                     tx: layer.position.tx, ty: layer.position.ty)
         let groupTransform = affine(scale: group.position.scale,
                                     tx: group.position.tx, ty: group.position.ty)
+        // Applied while the content is centred on the origin, so it scales
+        // about the middle of the canvas rather than a corner.
+        let fitScale = max(0, 1 - 2 * contentInset)
+        let fit = CGAffineTransform(scaleX: fitScale, y: fitScale)
         let output = CGAffineTransform(a: k, b: 0, c: 0, d: k,
                                        tx: authoringSize / 2 * k,
                                        ty: authoringSize / 2 * k)
-        return centered.concatenating(layerTransform).concatenating(groupTransform).concatenating(output)
+        return centered.concatenating(layerTransform).concatenating(groupTransform)
+            .concatenating(fit).concatenating(output)
+    }
+
+    /// Map an arbitrary SVG viewBox into the square authoring canvas using the
+    /// SVG default aspect-ratio behavior (`xMidYMid meet`).
+    private static func viewBoxTransform(_ viewBox: CGRect) -> CGAffineTransform {
+        guard viewBox.width > 0, viewBox.height > 0 else { return .identity }
+        let scale = min(authoringSize / viewBox.width, authoringSize / viewBox.height)
+        return CGAffineTransform(a: scale, b: 0, c: 0, d: scale,
+                                 tx: (authoringSize - viewBox.width * scale) / 2
+                                    - viewBox.minX * scale,
+                                 ty: (authoringSize - viewBox.height * scale) / 2
+                                    - viewBox.minY * scale)
+    }
+
+    private static func transformedCanvasPath(_ path: CGPath, viewBox: CGRect,
+                                              layer: Layer, group: IconGroup,
+                                              outputSize: CGFloat,
+                                              contentInset: Double = 0) -> CGPath? {
+        var normalize = viewBoxTransform(viewBox)
+        guard let authoringPath = path.copy(using: &normalize) else { return nil }
+        var place = layerCanvasTransform(layer: layer, group: group, outputSize: outputSize,
+                                         contentInset: contentInset)
+        return authoringPath.copy(using: &place)
     }
 
     private static func affine(scale: Double, tx: Double, ty: Double) -> CGAffineTransform {

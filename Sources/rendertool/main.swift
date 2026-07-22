@@ -2,7 +2,6 @@ import Foundation
 import CoreGraphics
 import ImageIO
 import UniformTypeIdentifiers
-import IconBuilderCore
 
 // Headless validation harness:
 //   rendertool <path-to.icon> <out-dir>
