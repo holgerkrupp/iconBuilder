@@ -1,0 +1,15 @@
+{
+  "originHash" : "b9b82e86513782a8fc717ec58ed4f24d0e522d2e474c43aa78863d45de92c435",
+  "pins" : [
+    {
+      "identity" : "shapeeditingkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/holgerkrupp/ShapeEditingKit",
+      "state" : {
+        "branch" : "main",
+        "revision" : "f6e1fb11ff00ae2348c8a6001adcf397f480bcd4"
+      }
+    }
+  ],
+  "version" : 3
+}

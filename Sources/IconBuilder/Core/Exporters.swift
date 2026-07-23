@@ -97,6 +97,43 @@ enum Exporters {
 
     /// Options for a print-ready PDF: physical size, bleed, die-cut line.
     struct PrintOptions: Sendable {
+        enum Shape: String, Sendable, CaseIterable, Identifiable {
+            case icon
+            case square
+            case roundedSquare
+            case circle
+
+            var id: Self { self }
+
+            var name: String {
+                switch self {
+                case .icon: return "Icon shape"
+                case .square: return "Square"
+                case .roundedSquare: return "Rounded square"
+                case .circle: return "Circle"
+                }
+            }
+
+            fileprivate func applying(to recipe: Recipe) -> Recipe {
+                var result = recipe
+                switch self {
+                case .icon:
+                    break
+                case .square:
+                    result.mask = .square
+                    result.contentInset = 0
+                case .roundedSquare:
+                    result.mask = .roundedRect
+                    result.cornerFraction = 0.16
+                    result.contentInset = 0
+                case .circle:
+                    result.mask = .circle
+                    result.contentInset = 0
+                }
+                return result
+            }
+        }
+
         /// Finished (cut) icon size in millimetres.
         var targetSizeMM: Double
         /// Bleed added on every side, in millimetres.
@@ -117,10 +154,12 @@ enum Exporters {
         /// fills the bleed; the seam falls on the cut line. Raster in the trim
         /// area at the PNG's native resolution.
         var artworkPNGURL: URL?
+        /// Finished die-cut shape. `icon` retains the currently selected recipe mask.
+        var shape: Shape
 
         init(targetSizeMM: Double = 50, bleedMM: Double = 3, dpi: Double = 300,
                     flatten: Bool = false, cutLine: Bool = true, rgb: Bool = false,
-                    artworkPNGURL: URL? = nil) {
+                    artworkPNGURL: URL? = nil, shape: Shape = .icon) {
             self.targetSizeMM = targetSizeMM
             self.bleedMM = bleedMM
             self.dpi = dpi
@@ -128,6 +167,7 @@ enum Exporters {
             self.cutLine = cutLine
             self.rgb = rgb
             self.artworkPNGURL = artworkPNGURL
+            self.shape = shape
         }
 
         static let mmToPt = 72.0 / 25.4
@@ -153,6 +193,7 @@ enum Exporters {
         }
 
         var opts = options
+        opts.recipe = p.shape.applying(to: options.recipe)
         opts.cmyk = !p.rgb
         opts.clipToMask = true
         opts.vectorPDF = !p.flatten
@@ -231,6 +272,39 @@ enum Exporters {
             output = injected
         }
         try output.write(to: url)
+    }
+
+    /// Raster preview of the complete print page, including bleed. The caller
+    /// draws the cut line as a UI overlay so it remains visible at any zoom.
+    static func printPreview(_ doc: IconDocument, print p: PrintOptions,
+                             options: RenderOptions, pixelSize: Int = 512) -> CGImage? {
+        guard (1...maximumRasterDimension).contains(pixelSize),
+              p.pageSizeMM.isFinite, p.pageSizeMM > 0 else { return nil }
+        let space = CGColorSpace(name: p.rgb ? CGColorSpace.sRGB : CGColorSpace.displayP3)!
+        guard let ctx = CGContext(data: nil, width: pixelSize, height: pixelSize,
+                                  bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            return nil
+        }
+        ctx.setFillColor(CGColor(gray: 1, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: pixelSize, height: pixelSize))
+
+        var opts = options
+        opts.cmyk = !p.rgb
+        opts.recipe = p.shape.applying(to: options.recipe)
+        let page = CGFloat(pixelSize)
+        let bleed = page * CGFloat(p.bleedMM / p.pageSizeMM)
+        drawPrintArtwork(doc, into: ctx, trimSize: page - 2 * bleed,
+                         bleed: bleed, options: opts)
+
+        if let pngURL = p.artworkPNGURL, let overlay = loadImage(url: pngURL) {
+            drawArtworkOverlay(overlay, into: ctx,
+                               trimRect: CGRect(x: bleed, y: bleed,
+                                                width: page - 2 * bleed,
+                                                height: page - 2 * bleed),
+                               options: opts)
+        }
+        return ctx.makeImage()
     }
 
     /// Draw the print artwork with seamless bleed.

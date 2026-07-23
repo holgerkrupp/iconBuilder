@@ -54,6 +54,9 @@
       <dict>
         <key>CFBundleTypeName</key><string>Icon Composer Icon</string>
         <key>CFBundleTypeRole</key><string>Editor</string>
+        <!-- Alternate, not Owner/Default: the type belongs to Apple's Icon
+             Composer; this app is a secondary editor for it. -->
+        <key>LSHandlerRank</key><string>Alternate</string>
         <key>LSTypeIsPackage</key><true/>
         <key>LSItemContentTypes</key>
         <array><string>com.apple.iconcomposer.icon</string></array>

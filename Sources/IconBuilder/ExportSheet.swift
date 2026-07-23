@@ -23,6 +23,7 @@ struct ExportSheet: View {
     @State private var printEffects = true
     @State private var printRGB = false
     @State private var printPNGURL: URL?
+    @State private var printShape: Exporters.PrintOptions.Shape = .icon
     @State private var status: String?
 
     var body: some View {
@@ -49,46 +50,13 @@ struct ExportSheet: View {
                      + "\(page.formatted(.number.precision(.fractionLength(0...1)))) mm, "
                      + "TrimBox on the finished size.")
                     .font(.caption).foregroundStyle(.secondary)
-                stepperRow("Icon size (mm)", value: $printSizeMM, range: 10...500, step: 5)
-                stepperRow("Bleed (mm)", value: $printBleedMM, range: 0...20, step: 0.5)
-                LabeledContent("Artwork") {
-                    Menu {
-                        Button("Rendered from .icon (vector)") { printPNGURL = nil }
-                        Button("Choose Icon Composer PNG…") { choosePNG() }
-                        if let u = printPNGURL {
-                            Divider()
-                            Label(u.lastPathComponent, systemImage: "checkmark")
-                        }
-                    } label: {
-                        Text(printPNGURL?.lastPathComponent ?? "Rendered from .icon (vector)")
-                            .lineLimit(1)
-                    }
-                    .fixedSize()
+                HStack(alignment: .top, spacing: 20) {
+                    printPreview
+                        .frame(width: 280)
+                    Divider()
+                    printSettings
+                        .frame(width: 380)
                 }
-                .help("Use Apple's own Icon Composer PNG export for the trim area — a pixel-exact match with the system render (raster). The bleed stays vector; the seam falls on the cut line.")
-                LabeledContent("Color") {
-                    Picker("", selection: $printRGB) {
-                        Text("CMYK (prepress)").tag(false)
-                        Text("RGB (sRGB)").tag(true)
-                    }
-                    .labelsHidden()
-                    .fixedSize()
-                    .accessibilityLabel("Print artwork color space")
-                }
-                .help("CMYK for classic prepress workflows. RGB keeps the full gamut and lets the print service convert with their own profiles — check what your shop prefers.")
-                if !printRGB {
-                    profileRow
-                    intentRow
-                }
-                Toggle("Cut line (CutContour spot color)", isOn: $printCutLine)
-                    .help("The die-cut contour as a /Separation spot color named CutContour on its own PDF layer — the format most print services expect.")
-                Toggle("Liquid Glass effects", isOn: $printEffects)
-                    .help("Vector-only glass lighting (rim, glow, translucency) so the print matches the on-screen icon. Off exports flat fills.")
-                Toggle("Flatten to raster", isOn: $printFlatten)
-                    .help("Rasterizes the artwork into a CMYK bitmap at the resolution below. The cut line stays vector.")
-                stepperRow("Resolution (dpi)", value: $printDPI, range: 72...1200, step: 50)
-                    .disabled(!printFlatten)
-                    .opacity(printFlatten ? 1 : 0.5)
             }
 
             if let message = validationMessage ?? status {
@@ -106,7 +74,113 @@ struct ExportSheet: View {
         .padding(20)
         .shapeEditorGlassPanel(cornerRadius: 24)
         .padding(12)
-        .frame(width: 380)
+        .frame(width: kind == .print ? 720 : 420)
+    }
+
+    private var printSettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            stepperRow("Icon size (mm)", value: $printSizeMM, range: 10...500, step: 5)
+            stepperRow("Bleed (mm)", value: $printBleedMM, range: 0...20, step: 0.5)
+            LabeledContent("Shape") {
+                Picker("", selection: $printShape) {
+                    ForEach(Exporters.PrintOptions.Shape.allCases) { shape in
+                        Text(shape.name).tag(shape)
+                    }
+                }
+                .labelsHidden().fixedSize()
+                .accessibilityLabel("Export shape")
+            }
+            .help("Sets both the finished artwork mask and the CutContour die line.")
+            LabeledContent("Artwork") {
+                Menu {
+                    Button("Rendered from .icon (vector)") { printPNGURL = nil }
+                    Button("Choose Icon Composer PNG…") { choosePNG() }
+                    if let u = printPNGURL {
+                        Divider()
+                        Label(u.lastPathComponent, systemImage: "checkmark")
+                    }
+                } label: {
+                    Text(printPNGURL?.lastPathComponent ?? "Rendered from .icon (vector)")
+                        .lineLimit(1)
+                }
+                .fixedSize()
+            }
+            .help("Use Apple's own Icon Composer PNG export for the trim area — a pixel-exact match with the system render (raster). The bleed stays vector; the seam falls on the cut line.")
+            LabeledContent("Color") {
+                Picker("", selection: $printRGB) {
+                    Text("CMYK (prepress)").tag(false)
+                    Text("RGB (sRGB)").tag(true)
+                }
+                .labelsHidden().fixedSize()
+                .accessibilityLabel("Print artwork color space")
+            }
+            .help("CMYK for classic prepress workflows. RGB keeps the full gamut and lets the print service convert with their own profiles — check what your shop prefers.")
+            if !printRGB { profileRow; intentRow }
+            Toggle("Cut line (CutContour spot color)", isOn: $printCutLine)
+                .help("The die-cut contour as a /Separation spot color named CutContour on its own PDF layer — the format most print services expect.")
+            Toggle("Liquid Glass effects", isOn: $printEffects)
+                .help("Vector-only glass lighting (rim, glow, translucency) so the print matches the on-screen icon. Off exports flat fills.")
+            Toggle("Flatten to raster", isOn: $printFlatten)
+                .help("Rasterizes the artwork into a CMYK bitmap at the resolution below. The cut line stays vector.")
+            stepperRow("Resolution (dpi)", value: $printDPI, range: 72...1200, step: 50)
+                .disabled(!printFlatten)
+                .opacity(printFlatten ? 1 : 0.5)
+        }
+    }
+
+    private var printPreview: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Preview")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            GeometryReader { proxy in
+                let side = min(proxy.size.width, proxy.size.height)
+                let inset = side * CGFloat(printBleedMM / max(printSizeMM + 2 * printBleedMM, 1))
+                let trimRect = CGRect(x: inset, y: inset,
+                                      width: side - 2 * inset, height: side - 2 * inset)
+                ZStack {
+                    Color.white
+                    if let image = printPreviewImage {
+                        Image(image, scale: 1, label: Text("Print export preview"))
+                            .resizable()
+                            .interpolation(.high)
+                    }
+                    if printCutLine {
+                        Canvas { context, _ in
+                            var recipe = model.options.recipe
+                            switch printShape {
+                            case .icon: break
+                            case .square: recipe.mask = .square
+                            case .roundedSquare:
+                                recipe.mask = .roundedRect
+                                recipe.cornerFraction = 0.16
+                            case .circle: recipe.mask = .circle
+                            }
+                            context.stroke(Path(recipe.maskPath(in: trimRect)),
+                                           with: .color(Color(red: 1, green: 0, blue: 1)),
+                                           lineWidth: 1)
+                        }
+                    }
+                }
+                .frame(width: side, height: side)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
+            }
+            .frame(height: 280)
+            Text("Magenta indicates the CutContour spot-color line.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var printPreviewImage: CGImage? {
+        guard let document = model.document else { return nil }
+        var options = model.options
+        options.effects = printEffects
+        let print = Exporters.PrintOptions(targetSizeMM: printSizeMM, bleedMM: printBleedMM,
+                                           cutLine: printCutLine, rgb: printRGB,
+                                           artworkPNGURL: printPNGURL, shape: printShape)
+        return Exporters.printPreview(document, print: print, options: options)
     }
 
     /// CMYK profile picker: the built-in formula or an imported ICC profile
@@ -225,7 +299,7 @@ struct ExportSheet: View {
                 let p = Exporters.PrintOptions(targetSizeMM: printSizeMM, bleedMM: printBleedMM,
                                                dpi: printDPI, flatten: printFlatten,
                                                cutLine: printCutLine, rgb: printRGB,
-                                               artworkPNGURL: printPNGURL)
+                                               artworkPNGURL: printPNGURL, shape: printShape)
                 try model.exportPrintPDF(to: url, print: p, effects: printEffects)
             }
             dismiss()

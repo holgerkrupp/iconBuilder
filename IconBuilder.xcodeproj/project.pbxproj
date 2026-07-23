@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		48341B75300BA0F700793109 /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 48341B74300BA0F700793109 /* ShapeEditingKit */; };
 		48341B77300BA0F700793109 /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 48341B76300BA0F700793109 /* ShapeEditingUI */; };
-		483DB868300E3F2F00BBC02F /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 483DB867300E3F2F00BBC02F /* ShapeEditingKit */; };
-		483DB86A300E3F2F00BBC02F /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 483DB869300E3F2F00BBC02F /* ShapeEditingUI */; };
+		484A4A2530109141008D7679 /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 484A4A2430109141008D7679 /* ShapeEditingKit */; };
+		484A4A2730109141008D7679 /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 484A4A2630109141008D7679 /* ShapeEditingUI */; };
 		48A534FD3008CC98006FB126 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 48A534FC3008CC98006FB126 /* AppIcon.icon */; };
 		AA00000000000000000000B3 /* ShapeEditingUI in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A3 /* ShapeEditingUI */; };
 		AA00000000000000000000B4 /* ShapeEditingKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000A4 /* ShapeEditingKit */; };
@@ -74,8 +74,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				483DB868300E3F2F00BBC02F /* ShapeEditingKit in Frameworks */,
-				483DB86A300E3F2F00BBC02F /* ShapeEditingUI in Frameworks */,
+				484A4A2530109141008D7679 /* ShapeEditingKit in Frameworks */,
+				484A4A2730109141008D7679 /* ShapeEditingUI in Frameworks */,
 				48341B75300BA0F700793109 /* ShapeEditingKit in Frameworks */,
 				48341B77300BA0F700793109 /* ShapeEditingUI in Frameworks */,
 				AA00000000000000000000B3 /* ShapeEditingUI in Frameworks */,
@@ -163,8 +163,8 @@
 				AA00000000000000000000A3 /* ShapeEditingUI */,
 				48341B74300BA0F700793109 /* ShapeEditingKit */,
 				48341B76300BA0F700793109 /* ShapeEditingUI */,
-				483DB867300E3F2F00BBC02F /* ShapeEditingKit */,
-				483DB869300E3F2F00BBC02F /* ShapeEditingUI */,
+				484A4A2430109141008D7679 /* ShapeEditingKit */,
+				484A4A2630109141008D7679 /* ShapeEditingUI */,
 			);
 			productName = IconBuilder;
 			productReference = AA0000000000000000000011 /* IconBuilder.app */;
@@ -235,7 +235,7 @@
 			mainGroup = AA0000000000000000000041;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */,
+				484A4A2330109141008D7679 /* XCRemoteSwiftPackageReference "ShapeEditingKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AA0000000000000000000042 /* Products */;
@@ -578,12 +578,16 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../ShapeEditingKit;
+/* Begin XCRemoteSwiftPackageReference section */
+		484A4A2330109141008D7679 /* XCRemoteSwiftPackageReference "ShapeEditingKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/holgerkrupp/ShapeEditingKit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		48341B74300BA0F700793109 /* ShapeEditingKit */ = {
@@ -594,14 +598,14 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = ShapeEditingUI;
 		};
-		483DB867300E3F2F00BBC02F /* ShapeEditingKit */ = {
+		484A4A2430109141008D7679 /* ShapeEditingKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */;
+			package = 484A4A2330109141008D7679 /* XCRemoteSwiftPackageReference "ShapeEditingKit" */;
 			productName = ShapeEditingKit;
 		};
-		483DB869300E3F2F00BBC02F /* ShapeEditingUI */ = {
+		484A4A2630109141008D7679 /* ShapeEditingUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 483DB866300E3F2F00BBC02F /* XCLocalSwiftPackageReference "../ShapeEditingKit" */;
+			package = 484A4A2330109141008D7679 /* XCRemoteSwiftPackageReference "ShapeEditingKit" */;
 			productName = ShapeEditingUI;
 		};
 		AA00000000000000000000A3 /* ShapeEditingUI */ = {
